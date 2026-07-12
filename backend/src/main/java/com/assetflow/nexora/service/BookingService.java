@@ -6,6 +6,7 @@ import com.assetflow.nexora.entity.Asset;
 import com.assetflow.nexora.entity.ResourceBooking;
 import com.assetflow.nexora.entity.User;
 import com.assetflow.nexora.exception.BadRequestException;
+import com.assetflow.nexora.exception.BookingOverlapException;
 import com.assetflow.nexora.exception.ResourceNotFoundException;
 import com.assetflow.nexora.repository.AssetRepository;
 import com.assetflow.nexora.repository.ResourceBookingRepository;
@@ -13,6 +14,7 @@ import com.assetflow.nexora.repository.UserRepository;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,8 +69,40 @@ public class BookingService {
         booking.endTime = request.endTime();
         booking.status = "Upcoming";
         
-        ResourceBooking saved = bookings.save(booking);
-        return toResponse(saved);
+        try {
+            ResourceBooking saved = bookings.save(booking);
+            return toResponse(saved);
+        } catch (DataIntegrityViolationException e) {
+            // Check if it's an overlap constraint violation
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("excl_no_overlapping_bookings")) {
+                // Find the overlapping booking to provide details
+                List<ResourceBooking> existingBookings = bookings.findByAssetId(request.assetId());
+                for (ResourceBooking existing : existingBookings) {
+                    if (("Upcoming".equals(existing.status) || "Ongoing".equals(existing.status)) &&
+                        isOverlapping(request.startTime(), request.endTime(), existing.startTime, existing.endTime)) {
+                        throw new BookingOverlapException(
+                            String.format("Time slot %s to %s overlaps with an existing booking from %s to %s",
+                                request.startTime(), request.endTime(), existing.startTime, existing.endTime),
+                            existing.startTime,
+                            existing.endTime
+                        );
+                    }
+                }
+                throw new BookingOverlapException(
+                    "Booking time slot overlaps with an existing booking. Please choose a different time.",
+                    request.startTime(),
+                    request.endTime()
+                );
+            }
+            throw e;
+        }
+    }
+
+    private boolean isOverlapping(OffsetDateTime start1, OffsetDateTime end1, 
+                                   OffsetDateTime start2, OffsetDateTime end2) {
+        // Ranges overlap if: start1 < end2 AND end1 > start2
+        return start1.isBefore(end2) && end1.isAfter(start2);
     }
 
     @Transactional(readOnly = true)
