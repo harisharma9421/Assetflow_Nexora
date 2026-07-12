@@ -29,14 +29,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variants = {
       primary:
-        "bg-[hsl(var(--color-primary))] text-white hover:bg-[hsl(var(--color-primary)/0.9)] focus-visible:ring-[hsl(var(--color-primary))]",
+        "bg-primary text-primary-foreground hover:opacity-90 focus-visible:ring-primary shadow-sm",
       outline:
-        "border border-[hsl(var(--color-border))] bg-white text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] focus-visible:ring-[hsl(var(--color-ring))]",
+        "border border-border bg-card text-foreground hover:bg-muted focus-visible:ring-ring shadow-xs",
       ghost:
-        "text-[hsl(var(--color-foreground))] hover:bg-[hsl(var(--color-muted))] focus-visible:ring-[hsl(var(--color-ring))]",
+        "text-foreground hover:bg-muted focus-visible:ring-ring",
       destructive:
-        "bg-[hsl(var(--color-destructive))] text-white hover:bg-[hsl(var(--color-destructive)/0.9)] focus-visible:ring-[hsl(var(--color-destructive))]",
-      link: "text-[hsl(var(--color-primary))] underline-offset-4 hover:underline p-0 h-auto",
+        "bg-destructive text-destructive-foreground hover:opacity-90 focus-visible:ring-destructive shadow-sm",
+      link: "text-primary underline-offset-4 hover:underline p-0 h-auto",
     };
 
     const sizes = {

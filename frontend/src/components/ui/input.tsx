@@ -30,12 +30,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={id}
           ref={ref}
           className={cn(
-            "h-10 w-full rounded-md border bg-white px-3 py-2 text-sm text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-ring))] focus:ring-offset-1",
+            "h-10 w-full rounded-md border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors",
+            "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
             "disabled:cursor-not-allowed disabled:opacity-50",
             error
-              ? "border-[hsl(var(--color-destructive))] focus:ring-[hsl(var(--color-destructive))]"
-              : "border-[hsl(var(--color-border))] hover:border-[hsl(var(--color-ring)/0.4)]",
+              ? "border-destructive focus:ring-destructive"
+              : "border-border hover:border-primary/50",
             className
           )}
           {...props}
@@ -82,12 +82,12 @@ export const PasswordInput = React.forwardRef<
           id={props.id}
           type={show ? "text" : "password"}
           className={cn(
-            "h-10 w-full rounded-md border bg-white px-3 py-2 pr-10 text-sm text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-ring))] focus:ring-offset-1",
+            "h-10 w-full rounded-md border bg-card px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-colors",
+            "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1",
             "disabled:cursor-not-allowed disabled:opacity-50",
             props.error
-              ? "border-[hsl(var(--color-destructive))] focus:ring-[hsl(var(--color-destructive))]"
-              : "border-[hsl(var(--color-border))] hover:border-[hsl(var(--color-ring)/0.4)]",
+              ? "border-destructive focus:ring-destructive"
+              : "border-border hover:border-primary/50",
             className
           )}
           disabled={props.disabled}

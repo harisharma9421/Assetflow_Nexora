@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Package,
   UserCheck,
@@ -175,49 +176,54 @@ const latestAssets = [
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const userName = user?.fullName || "Operator";
+  const orgName = "Nexora ERP Platform";
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
       {/* ─── WELCOME BANNER ─────────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[hsl(var(--radius))] border border-indigo-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm"
       >
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-indigo-50/60 blur-3xl dark:bg-indigo-950/20" />
-        <div className="absolute left-1/3 bottom-0 -mb-16 h-36 w-36 rounded-full bg-blue-50/50 blur-2xl dark:bg-slate-800/10" />
+        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute left-1/3 bottom-0 -mb-16 h-36 w-36 rounded-full bg-blue-500/5 blur-2xl" />
 
         <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <UserAvatar name={userName} size="lg" />
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--color-primary))]">
-                Enterprise Workspace
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                {orgName} · Administrator
               </span>
-              <h2 className="text-xl font-bold tracking-tight text-[hsl(var(--color-foreground))] sm:text-2xl mt-0.5">
+              <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-0.5">
                 Welcome back, {userName}!
               </h2>
-              <p className="text-sm text-[hsl(var(--color-muted-foreground))]">
+              <p className="text-xs text-muted-foreground">
                 Here is your operational overview for Nexora Resource Management today.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<PlusCircle className="h-4 w-4" />}
-              className="h-10 rounded-xl"
-            >
-              Quick Register
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              className="h-10 rounded-xl"
-            >
-              New Allocation
-            </Button>
+            <Link href="/assets">
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<PlusCircle className="h-4 w-4" />}
+                className="h-10 rounded-xl"
+              >
+                Quick Register
+              </Button>
+            </Link>
+            <Link href="/allocations">
+              <Button
+                variant="primary"
+                size="sm"
+                className="h-10 rounded-xl"
+              >
+                New Allocation
+              </Button>
+            </Link>
           </div>
         </div>
       </motion.div>
@@ -257,17 +263,17 @@ export default function DashboardPage() {
       {/* ─── CHARTS & METRICS ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main Utilization Area Chart */}
-        <div className="lg:col-span-2 rounded-[hsl(var(--radius))] border border-[hsl(var(--color-border))] bg-white p-6 shadow-sm dark:bg-slate-900/10">
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-base font-bold text-[hsl(var(--color-foreground))]">
+              <h3 className="text-base font-bold text-foreground">
                 Asset Allocation Trends
               </h3>
-              <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
+              <p className="text-xs text-muted-foreground">
                 Historical split of active, idle and maintenance states.
               </p>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-[hsl(var(--color-muted-foreground))] dark:bg-slate-900 border border-slate-100">
+            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground border border-border">
               <TrendingUp className="h-3.5 w-3.5 text-green-500" />
               <span>+14% Utilized</span>
             </div>
@@ -281,7 +287,7 @@ export default function DashboardPage() {
                     <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
                 <XAxis dataKey="month" stroke="#94A3B8" fontSize={11} tickLine={false} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
                 <Tooltip />
@@ -300,11 +306,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Category breakdown pie chart */}
-        <div className="rounded-[hsl(var(--radius))] border border-[hsl(var(--color-border))] bg-white p-6 shadow-sm dark:bg-slate-900/10">
-          <h3 className="text-base font-bold text-[hsl(var(--color-foreground))]">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-base font-bold text-foreground">
             Category Distribution
           </h3>
-          <p className="text-xs text-[hsl(var(--color-muted-foreground))] mb-4">
+          <p className="text-xs text-muted-foreground mb-4">
             Percentage split of registered physical assets.
           </p>
           <div className="flex items-center justify-center h-44">
@@ -331,8 +337,8 @@ export default function DashboardPage() {
             {categoryDistribution.map((cat) => (
               <div key={cat.name} className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                <span className="text-xs font-semibold text-[hsl(var(--color-foreground))] truncate">
-                  {cat.name} ({cat.value}%)
+                <span className="text-xs font-semibold text-foreground truncate">
+                  {cat.name} ({cat.value})
                 </span>
               </div>
             ))}
@@ -343,43 +349,45 @@ export default function DashboardPage() {
       {/* ─── GRID: RECENT ACTIVITIES, ACTION PANELS ─────────────────────────── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column: Recent Activities Timeline */}
-        <div className="rounded-[hsl(var(--radius))] border border-[hsl(var(--color-border))] bg-white p-6 shadow-sm dark:bg-slate-900/10 flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-[hsl(var(--color-foreground))]">
+              <h3 className="text-base font-bold text-foreground">
                 Real-Time Logs
               </h3>
-              <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-ping" />
+              <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
             </div>
             <Timeline items={recentActivities} />
           </div>
-          <Button
-            variant="link"
-            size="sm"
-            rightIcon={<ArrowRight className="h-4 w-4" />}
-            className="self-start text-xs font-bold text-[hsl(var(--color-primary))] mt-4"
-          >
-            View all activity logs
-          </Button>
+          <Link href="/activity-logs" className="self-start mt-4">
+            <Button
+              variant="link"
+              size="sm"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+              className="text-xs font-bold text-primary"
+            >
+              View all activity logs
+            </Button>
+          </Link>
         </div>
 
         {/* Center Column: Upcoming Returns & Notifications */}
-        <div className="rounded-[hsl(var(--radius))] border border-[hsl(var(--color-border))] bg-white p-6 shadow-sm dark:bg-slate-900/10 flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <h3 className="text-base font-bold text-[hsl(var(--color-foreground))] mb-3">
+            <h3 className="text-base font-bold text-foreground mb-3">
               Upcoming Returns
             </h3>
             <div className="flex flex-col gap-3">
               {upcomingReturns.map((ret) => (
                 <div
                   key={ret.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between rounded-xl border border-border bg-background p-3 hover:bg-muted transition-colors duration-150"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">
+                    <p className="text-sm font-semibold text-foreground">
                       {ret.asset}
                     </p>
-                    <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
+                    <p className="text-xs text-muted-foreground">
                       Holder: {ret.holder} · Due: {ret.dueDate}
                     </p>
                   </div>
@@ -388,33 +396,35 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-          <Button
-            variant="link"
-            size="sm"
-            rightIcon={<ArrowRight className="h-4 w-4" />}
-            className="self-start text-xs font-bold text-[hsl(var(--color-primary))] mt-4"
-          >
-            Manage active allocations
-          </Button>
+          <Link href="/allocations" className="self-start mt-4">
+            <Button
+              variant="link"
+              size="sm"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+              className="text-xs font-bold text-primary"
+            >
+              Manage active allocations
+            </Button>
+          </Link>
         </div>
 
         {/* Right Column: Pending Maintenance Requests */}
-        <div className="rounded-[hsl(var(--radius))] border border-[hsl(var(--color-border))] bg-white p-6 shadow-sm dark:bg-slate-900/10 flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <h3 className="text-base font-bold text-[hsl(var(--color-foreground))] mb-3">
+            <h3 className="text-base font-bold text-foreground mb-3">
               Pending Maintenance
             </h3>
             <div className="flex flex-col gap-3">
               {pendingMaintenance.map((maint) => (
                 <div
                   key={maint.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between rounded-xl border border-border bg-background p-3 hover:bg-muted transition-colors duration-150"
                 >
                   <div className="min-w-0 flex-1 pr-2">
-                    <p className="text-sm font-semibold text-[hsl(var(--color-foreground))] truncate">
+                    <p className="text-sm font-semibold text-foreground truncate">
                       {maint.asset}
                     </p>
-                    <p className="text-xs text-[hsl(var(--color-muted-foreground))] truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       Issue: {maint.issue} · Priority: {maint.priority}
                     </p>
                   </div>
@@ -423,36 +433,40 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-          <Button
-            variant="link"
-            size="sm"
-            rightIcon={<ArrowRight className="h-4 w-4" />}
-            className="self-start text-xs font-bold text-[hsl(var(--color-primary))] mt-4"
-          >
-            Open maintenance center
-          </Button>
+          <Link href="/maintenance" className="self-start mt-4">
+            <Button
+              variant="link"
+              size="sm"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+              className="text-xs font-bold text-primary"
+            >
+              Open maintenance center
+            </Button>
+          </Link>
         </div>
       </div>
 
       {/* ─── LATEST ASSETS TABLE ────────────────────────────────────────────── */}
-      <div className="rounded-[hsl(var(--radius))] border border-[hsl(var(--color-border))] bg-white p-6 shadow-sm dark:bg-slate-900/10">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-base font-bold text-[hsl(var(--color-foreground))]">
+            <h3 className="text-base font-bold text-foreground">
               Recently Registered Assets
             </h3>
-            <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
+            <p className="text-xs text-muted-foreground">
               Physical inventory checked in during the last 48 hours.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            rightIcon={<ArrowUpRight className="h-3.5 w-3.5" />}
-            className="h-9 text-xs font-semibold rounded-xl"
-          >
-            Inventory Directory
-          </Button>
+          <Link href="/assets">
+            <Button
+              variant="outline"
+              size="sm"
+              rightIcon={<ArrowUpRight className="h-3.5 w-3.5" />}
+              className="h-9 text-xs font-semibold rounded-xl bg-card hover:bg-muted"
+            >
+              Inventory Directory
+            </Button>
+          </Link>
         </div>
 
         <DataTable
@@ -464,7 +478,7 @@ export default function DashboardPage() {
               key: "condition",
               header: "Condition",
               render: (row) => (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-muted text-foreground border border-border">
                   {row.condition}
                 </span>
               ),

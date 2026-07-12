@@ -70,7 +70,7 @@ export default function AppSidebar() {
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150",
                 isActive
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                  : "text-[hsl(var(--color-sidebar-muted-foreground))] hover:bg-[hsl(var(--color-sidebar-accent))] hover:text-white"
               )}
             >
               <Icon className="h-5 w-5 shrink-0" />
@@ -83,9 +83,9 @@ export default function AppSidebar() {
   );
 
   return (
-    <div className="flex h-full flex-col bg-slate-900 text-slate-100 border-r border-slate-800">
+    <div className="flex h-full flex-col bg-[hsl(var(--color-sidebar))] text-[hsl(var(--color-sidebar-foreground))] border-r border-[hsl(var(--color-sidebar-border))]">
       {/* Brand logo */}
-      <div className="flex h-16 items-center gap-2.5 px-6 border-b border-slate-800">
+      <Link href="/" className="flex h-16 items-center gap-2.5 px-6 border-b border-[hsl(var(--color-sidebar-border))] hover:opacity-90 transition-opacity">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white">
           <Zap className="h-5 w-5 fill-current" />
         </div>
@@ -97,26 +97,26 @@ export default function AppSidebar() {
             ERP
           </span>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation areas */}
       <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-7">
         <div>
-          <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+          <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--color-sidebar-muted-foreground))] mb-3">
             Core Modules
           </span>
           {renderNavList(primaryNavigation)}
         </div>
 
         <div>
-          <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+          <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--color-sidebar-muted-foreground))] mb-3">
             Management
           </span>
           {renderNavList(utilityNavigation)}
         </div>
 
         <div>
-          <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">
+          <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--color-sidebar-muted-foreground))] mb-3">
             Settings
           </span>
           {renderNavList(settingsNavigation)}
@@ -124,22 +124,22 @@ export default function AppSidebar() {
       </div>
 
       {/* User block & logout */}
-      <div className="border-t border-slate-800 p-4">
-        <div className="flex items-center gap-3 rounded-xl bg-slate-950/40 p-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 font-bold text-white shrink-0 uppercase">
+      <div className="border-t border-[hsl(var(--color-sidebar-border))] p-4">
+        <div className="flex items-center gap-3 rounded-xl bg-[hsl(var(--color-sidebar-muted))] p-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--color-sidebar-accent))] font-bold text-white shrink-0 uppercase">
             {user?.fullName?.substring(0, 2) || "US"}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-white truncate">
               {user?.fullName || "Active User"}
             </p>
-            <p className="text-[10px] font-medium text-slate-500 truncate">
+            <p className="text-[10px] font-medium text-[hsl(var(--color-sidebar-muted-foreground))] truncate">
               {user?.roleName || "Employee"}
             </p>
           </div>
           <button
             onClick={logout}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-lg p-1.5 text-[hsl(var(--color-sidebar-muted-foreground))] hover:bg-[hsl(var(--color-sidebar-accent))] hover:text-white transition-colors"
             title="Log Out"
           >
             <LogOut className="h-4.5 w-4.5" />
