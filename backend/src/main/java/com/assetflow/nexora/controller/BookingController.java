@@ -43,15 +43,20 @@ public class BookingController {
     public List<ResourceBookingResponse> listBookings(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long bookedBy,
-            @RequestParam(required = false) Long assetId) {
-        return bookingService.listBookings(status, bookedBy, assetId);
+            @RequestParam(required = false) Long assetId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return bookingService.listBookings(status, bookedBy, assetId, userId);
     }
 
     @GetMapping("/{bookingId}")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'ASSET_MANAGER', 'ADMIN')")
     @Operation(summary = "Get booking details", description = "Get detailed information about a specific booking")
-    public ResourceBookingResponse getBooking(@PathVariable Long bookingId) {
-        return bookingService.getBooking(bookingId);
+    public ResourceBookingResponse getBooking(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return bookingService.getBooking(bookingId, userId);
     }
 
     @PostMapping("/{bookingId}/cancel")
@@ -59,8 +64,10 @@ public class BookingController {
     @Operation(summary = "Cancel booking", description = "Cancel a booking")
     public ResourceBookingResponse cancelBooking(
             @PathVariable Long bookingId,
-            @Valid @RequestBody BookingCancelRequest request) {
-        return bookingService.cancelBooking(bookingId, request);
+            @Valid @RequestBody BookingCancelRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return bookingService.cancelBooking(bookingId, userId, request.reason());
     }
 
     @PutMapping("/{bookingId}/reschedule")
@@ -68,21 +75,29 @@ public class BookingController {
     @Operation(summary = "Reschedule booking", description = "Change the time slot of a booking")
     public ResourceBookingResponse rescheduleBooking(
             @PathVariable Long bookingId,
-            @Valid @RequestBody BookingRescheduleRequest request) {
-        return bookingService.rescheduleBooking(bookingId, request);
+            @Valid @RequestBody BookingRescheduleRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return bookingService.rescheduleBooking(bookingId, request, userId);
     }
 
     @PostMapping("/{bookingId}/start")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'ASSET_MANAGER', 'ADMIN')")
     @Operation(summary = "Start booking", description = "Mark a booking as ongoing")
-    public ResourceBookingResponse startBooking(@PathVariable Long bookingId) {
-        return bookingService.startBooking(bookingId);
+    public ResourceBookingResponse startBooking(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return bookingService.startBooking(bookingId, userId);
     }
 
     @PostMapping("/{bookingId}/complete")
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'ASSET_MANAGER', 'ADMIN')")
     @Operation(summary = "Complete booking", description = "Mark a booking as completed")
-    public ResourceBookingResponse completeBooking(@PathVariable Long bookingId) {
-        return bookingService.completeBooking(bookingId);
+    public ResourceBookingResponse completeBooking(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        return bookingService.completeBooking(bookingId, userId);
     }
 }

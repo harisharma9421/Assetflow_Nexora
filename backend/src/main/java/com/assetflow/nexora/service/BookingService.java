@@ -10,6 +10,7 @@ import com.assetflow.nexora.entity.User;
 import com.assetflow.nexora.exception.BadRequestException;
 import com.assetflow.nexora.exception.BookingOverlapException;
 import com.assetflow.nexora.exception.ResourceNotFoundException;
+import com.assetflow.nexora.exception.UnauthorizedException;
 import com.assetflow.nexora.repository.AssetRepository;
 import com.assetflow.nexora.repository.ResourceBookingRepository;
 import com.assetflow.nexora.repository.UserRepository;
@@ -128,7 +129,14 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public List<ResourceBookingResponse> listBookings(String status, Long bookedBy, Long assetId) {
+    public List<ResourceBookingResponse> listBookings(String status, Long bookedBy, Long assetId, Long requestingUserId) {
+        // Get user to check their role
+        User requestingUser = users.findById(requestingUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + requestingUserId + " was not found"));
+        
+        // Admin (1) and Asset Manager (2) can see all bookings
+        boolean isAdminOrManager = requestingUser.roleId == 1 || requestingUser.roleId == 2;
+        
         List<ResourceBooking> result;
         
         if (assetId != null) {
@@ -147,19 +155,34 @@ public class BookingService {
                     .toList();
         }
         
+        // AUTHORIZATION: Regular users can only see their own bookings
+        if (!isAdminOrManager) {
+            Long finalUserId = requestingUserId;
+            result = result.stream()
+                    .filter(b -> finalUserId.equals(b.bookedBy))
+                    .toList();
+        }
+        
         return result.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public ResourceBookingResponse getBooking(Long bookingId) {
+    public ResourceBookingResponse getBooking(Long bookingId, Long requestingUserId) {
         ResourceBooking booking = findBooking(bookingId);
+        
+        // AUTHORIZATION: Check if user can access this booking
+        validateBookingAccess(booking, requestingUserId, "view");
+        
         return toResponse(booking);
     }
 
-    public ResourceBookingResponse cancelBooking(Long bookingId, BookingCancelRequest request) {
+    public ResourceBookingResponse cancelBooking(Long bookingId, Long cancelledBy, String reason) {
         ResourceBooking booking = findBooking(bookingId);
+        
+        // AUTHORIZATION: Check if user can cancel this booking
+        validateBookingAccess(booking, cancelledBy, "cancel");
         
         // Validate booking is not already cancelled or completed
         if ("Cancelled".equals(booking.status)) {
@@ -171,12 +194,12 @@ public class BookingService {
         }
         
         // Validate user exists
-        users.findById(request.cancelledBy())
-                .orElseThrow(() -> new ResourceNotFoundException("User with id " + request.cancelledBy() + " was not found"));
+        users.findById(cancelledBy)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + cancelledBy + " was not found"));
         
         // Cancel the booking
         booking.status = "Cancelled";
-        booking.cancelledBy = request.cancelledBy();
+        booking.cancelledBy = cancelledBy;
         booking.cancelledAt = OffsetDateTime.now(ZoneOffset.UTC);
         
         ResourceBooking saved = bookings.save(booking);
@@ -186,10 +209,10 @@ public class BookingService {
             "BOOKING_CANCELLED",
             "booking",
             saved.id,
-            request.cancelledBy(),
+            cancelledBy,
             Map.of(
                 "assetId", booking.assetId,
-                "reason", request.reason() != null ? request.reason() : "",
+                "reason", reason != null ? reason : "",
                 "originalStartTime", booking.startTime.toString(),
                 "originalEndTime", booking.endTime.toString()
             )
@@ -198,8 +221,11 @@ public class BookingService {
         return toResponse(saved);
     }
 
-    public ResourceBookingResponse rescheduleBooking(Long bookingId, BookingRescheduleRequest request) {
+    public ResourceBookingResponse rescheduleBooking(Long bookingId, BookingRescheduleRequest request, Long requestingUserId) {
         ResourceBooking booking = findBooking(bookingId);
+        
+        // AUTHORIZATION: Check if user can reschedule this booking
+        validateBookingAccess(booking, requestingUserId, "reschedule");
         
         // Validate booking can be rescheduled
         if ("Cancelled".equals(booking.status)) {
@@ -242,7 +268,7 @@ public class BookingService {
                 "BOOKING_RESCHEDULED",
                 "booking",
                 saved.id,
-                booking.bookedBy,
+                requestingUserId,
                 Map.of(
                     "assetId", booking.assetId,
                     "oldStartTime", oldStart.toString(),
@@ -281,8 +307,11 @@ public class BookingService {
         }
     }
 
-    public ResourceBookingResponse startBooking(Long bookingId) {
+    public ResourceBookingResponse startBooking(Long bookingId, Long requestingUserId) {
         ResourceBooking booking = findBooking(bookingId);
+        
+        // AUTHORIZATION: Check if user can start this booking
+        validateBookingAccess(booking, requestingUserId, "start");
         
         if (!"Upcoming".equals(booking.status)) {
             throw new BadRequestException("Only upcoming bookings can be started");
@@ -290,11 +319,28 @@ public class BookingService {
         
         booking.status = "Ongoing";
         ResourceBooking saved = bookings.save(booking);
+        
+        // Log activity
+        activityLogService.log(
+            "BOOKING_STARTED",
+            "booking",
+            saved.id,
+            requestingUserId,
+            Map.of(
+                "assetId", booking.assetId,
+                "startTime", booking.startTime.toString(),
+                "endTime", booking.endTime.toString()
+            )
+        );
+        
         return toResponse(saved);
     }
 
-    public ResourceBookingResponse completeBooking(Long bookingId) {
+    public ResourceBookingResponse completeBooking(Long bookingId, Long requestingUserId) {
         ResourceBooking booking = findBooking(bookingId);
+        
+        // AUTHORIZATION: Check if user can complete this booking
+        validateBookingAccess(booking, requestingUserId, "complete");
         
         if (!"Ongoing".equals(booking.status) && !"Upcoming".equals(booking.status)) {
             throw new BadRequestException("Only ongoing or upcoming bookings can be completed");
@@ -302,7 +348,47 @@ public class BookingService {
         
         booking.status = "Completed";
         ResourceBooking saved = bookings.save(booking);
+        
+        // Log activity
+        activityLogService.log(
+            "BOOKING_COMPLETED",
+            "booking",
+            saved.id,
+            requestingUserId,
+            Map.of(
+                "assetId", booking.assetId,
+                "startTime", booking.startTime.toString(),
+                "endTime", booking.endTime.toString()
+            )
+        );
+        
         return toResponse(saved);
+    }
+    
+    /**
+     * Validates if a user has permission to access/modify a booking.
+     * ADMIN and ASSET_MANAGER can access all bookings.
+     * Regular users can only access their own bookings.
+     */
+    private void validateBookingAccess(ResourceBooking booking, Long requestingUserId, String action) {
+        User requestingUser = users.findById(requestingUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + requestingUserId + " was not found"));
+        
+        // Role IDs: 1=Admin, 2=Asset Manager, 3=Department Head, 4=Employee
+        boolean isAdminOrManager = requestingUser.roleId == 1 || requestingUser.roleId == 2;
+        
+        // ADMIN and ASSET_MANAGER can access any booking
+        if (isAdminOrManager) {
+            return;
+        }
+        
+        // Regular users can only access their own bookings
+        if (!booking.bookedBy.equals(requestingUserId)) {
+            throw new UnauthorizedException(
+                String.format("You do not have permission to %s this booking. You can only %s your own bookings.", 
+                    action, action)
+            );
+        }
     }
 
     private ResourceBooking findBooking(Long id) {
