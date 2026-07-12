@@ -60,6 +60,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/asset-categories/**").hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, "/api/asset-categories/**").hasRole(ADMIN)
                         .requestMatchers(HttpMethod.DELETE, "/api/category-fields/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/**").hasRole(ADMIN)
                         .requestMatchers(HttpMethod.POST, "/api/assets/**").hasAnyRole(ADMIN, ASSET_MANAGER)
                         .requestMatchers(HttpMethod.PUT, "/api/assets/**").hasAnyRole(ADMIN, ASSET_MANAGER)
                         .requestMatchers(HttpMethod.PATCH, "/api/assets/**").hasAnyRole(ADMIN, ASSET_MANAGER)
