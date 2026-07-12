@@ -7,6 +7,8 @@ import com.assetflow.nexora.repository.*;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -59,8 +61,8 @@ public class AssetService {
     }
 
     @Transactional(readOnly = true)
-    public List<AssetResponse> search(String search, String tag, String serialNumber, String qrCode, Long categoryId,
-            String status, Long departmentId, String location) {
+    public Page<AssetResponse> search(String search, String tag, String serialNumber, String qrCode, Long categoryId,
+            String status, Long departmentId, String location, Pageable pageable) {
         Specification<Asset> specification = Specification.where(null);
         specification = specification.and(equal("assetTag", tag)).and(equal("serialNumber", serialNumber))
                 .and(equal("qrCode", qrCode)).and(equal("categoryId", categoryId))
@@ -70,8 +72,14 @@ public class AssetService {
                     builder.like(builder.lower(root.get("assetTag")), like(search)),
                     builder.like(builder.lower(root.get("serialNumber")), like(search)),
                     builder.like(builder.lower(root.get("name")), like(search))));
-        return assets.findAll(specification).stream().filter(asset -> status == null || status.equals(asset.status))
-                .map(this::response).toList();
+        
+        // Add status filter to specification instead of post-filtering
+        if (status != null && !status.isBlank()) {
+            specification = specification.and(equal("status", status));
+        }
+        
+        // Return paginated results
+        return assets.findAll(specification, pageable).map(this::response);
     }
 
     @Transactional(readOnly = true)

@@ -6,6 +6,9 @@ import com.assetflow.nexora.service.AssetService;
 import com.assetflow.nexora.service.QrCodeService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,12 +32,13 @@ public class AssetController {
     }
 
     @GetMapping
-    public List<AssetResponse> search(@RequestParam(required = false) String search,
+    public Page<AssetResponse> search(@RequestParam(required = false) String search,
             @RequestParam(required = false) String tag, @RequestParam(required = false) String serialNumber,
             @RequestParam(required = false) String qrCode, @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String status, @RequestParam(required = false) Long departmentId,
-            @RequestParam(required = false) String location) {
-        return assets.search(search, tag, serialNumber, qrCode, categoryId, status, departmentId, location);
+            @RequestParam(required = false) String location,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        return assets.search(search, tag, serialNumber, qrCode, categoryId, status, departmentId, location, pageable);
     }
 
     @GetMapping("/{assetId}")
