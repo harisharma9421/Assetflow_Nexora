@@ -16,6 +16,7 @@ import com.assetflow.nexora.repository.UserRepository;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +27,14 @@ public class BookingService {
     private final ResourceBookingRepository bookings;
     private final AssetRepository assets;
     private final UserRepository users;
+    private final ActivityLogService activityLogService;
 
-    public BookingService(ResourceBookingRepository bookings, AssetRepository assets, UserRepository users) {
+    public BookingService(ResourceBookingRepository bookings, AssetRepository assets, UserRepository users,
+            ActivityLogService activityLogService) {
         this.bookings = bookings;
         this.assets = assets;
         this.users = users;
+        this.activityLogService = activityLogService;
     }
 
     public ResourceBookingResponse createBooking(ResourceBookingRequest request, Long bookedBy) {
@@ -73,6 +77,22 @@ public class BookingService {
         
         try {
             ResourceBooking saved = bookings.save(booking);
+            
+            // Log activity
+            activityLogService.log(
+                "BOOKING_CREATED",
+                "booking",
+                saved.id,
+                bookedBy,
+                Map.of(
+                    "assetId", request.assetId(),
+                    "startTime", request.startTime().toString(),
+                    "endTime", request.endTime().toString(),
+                    "purpose", request.purpose() != null ? request.purpose() : "",
+                    "departmentId", request.departmentId() != null ? request.departmentId() : 0
+                )
+            );
+            
             return toResponse(saved);
         } catch (DataIntegrityViolationException e) {
             // Check if it's an overlap constraint violation
@@ -160,6 +180,21 @@ public class BookingService {
         booking.cancelledAt = OffsetDateTime.now(ZoneOffset.UTC);
         
         ResourceBooking saved = bookings.save(booking);
+        
+        // Log activity
+        activityLogService.log(
+            "BOOKING_CANCELLED",
+            "booking",
+            saved.id,
+            request.cancelledBy(),
+            Map.of(
+                "assetId", booking.assetId,
+                "reason", request.reason() != null ? request.reason() : "",
+                "originalStartTime", booking.startTime.toString(),
+                "originalEndTime", booking.endTime.toString()
+            )
+        );
+        
         return toResponse(saved);
     }
 
@@ -201,6 +236,22 @@ public class BookingService {
             
             // Database constraint will check for overlaps with other bookings
             ResourceBooking saved = bookings.save(booking);
+            
+            // Log activity
+            activityLogService.log(
+                "BOOKING_RESCHEDULED",
+                "booking",
+                saved.id,
+                booking.bookedBy,
+                Map.of(
+                    "assetId", booking.assetId,
+                    "oldStartTime", oldStart.toString(),
+                    "oldEndTime", oldEnd.toString(),
+                    "newStartTime", request.startTime().toString(),
+                    "newEndTime", request.endTime().toString()
+                )
+            );
+            
             return toResponse(saved);
         } catch (DataIntegrityViolationException e) {
             // Check if it's an overlap constraint violation
