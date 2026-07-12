@@ -2,6 +2,7 @@ package com.assetflow.nexora.service;
 
 import com.assetflow.nexora.dto.*;
 import com.assetflow.nexora.entity.*;
+import com.assetflow.nexora.exception.AllocationConflictException;
 import com.assetflow.nexora.exception.BadRequestException;
 import com.assetflow.nexora.exception.ResourceNotFoundException;
 import com.assetflow.nexora.repository.*;
@@ -39,9 +40,15 @@ public class AllocationService {
         validateHolder(request.holderType(), request.holderEmployeeId(), request.holderDepartmentId());
         if (!"Available".equals(asset.status))
             throw new BadRequestException("Asset must be Available before allocation");
+        
+        // Check for existing active allocation and throw conflict with current holder details
         allocations.findByAssetIdAndStatus(asset.id, ACTIVE)
                 .ifPresent(existing -> {
-                    throw new BadRequestException("Asset is already allocated");
+                    AssetAllocationResponse currentHolder = response(existing);
+                    throw new AllocationConflictException(
+                        "Asset is already allocated. Please use transfer request workflow instead.", 
+                        currentHolder
+                    );
                 });
 
         AssetAllocation allocation = new AssetAllocation();
