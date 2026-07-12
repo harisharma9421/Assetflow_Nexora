@@ -1,5 +1,6 @@
 import React from "react";
 import AuthIllustration from "@/features/auth/components/AuthIllustration";
+import LoginVisualPanel from "@/features/auth/components/LoginVisualPanel";
 
 interface AuthPageWrapperProps {
   children: React.ReactNode;
@@ -19,7 +20,11 @@ export default function AuthPageWrapper({
     <div className="flex min-h-screen bg-[hsl(var(--color-background))]">
       {/* Left — Illustration (desktop only) */}
       <div className="hidden lg:block lg:w-[42%] xl:w-[45%] flex-shrink-0 border-r border-[hsl(var(--color-border))]">
-        <AuthIllustration variant={variant} />
+        {variant === "login" ? (
+          <LoginVisualPanel />
+        ) : (
+          <AuthIllustration variant={variant} />
+        )}
       </div>
 
       {/* Right — Form wrapper */}
