@@ -22,44 +22,61 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, USER_ROLES } from "@/lib/constants";
+import type { UserRole } from "@/types/auth.types";
 
 interface NavigationItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  role?: string[]; // permissions
+  roles?: UserRole[];
 }
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, currentRole, logout } = useAuth();
+  const adminRoles = [USER_ROLES.ADMIN] as UserRole[];
+  const managerRoles = [USER_ROLES.ADMIN, USER_ROLES.ASSET_MANAGER] as UserRole[];
+  const approverRoles = [
+    USER_ROLES.ADMIN,
+    USER_ROLES.ASSET_MANAGER,
+    USER_ROLES.DEPARTMENT_HEAD,
+  ] as UserRole[];
+  const allRoles = [
+    USER_ROLES.ADMIN,
+    USER_ROLES.ASSET_MANAGER,
+    USER_ROLES.DEPARTMENT_HEAD,
+    USER_ROLES.EMPLOYEE,
+  ] as UserRole[];
 
   const primaryNavigation: NavigationItem[] = [
-    { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard },
-    { label: "Assets Directory", href: ROUTES.ASSETS, icon: Package },
-    { label: "Allocations", href: ROUTES.ALLOCATIONS, icon: UserCheck },
-    { label: "Resource Bookings", href: ROUTES.BOOKINGS, icon: CalendarDays },
-    { label: "Maintenance Requests", href: ROUTES.MAINTENANCE, icon: Wrench },
-    { label: "Audits & Registers", href: ROUTES.AUDITS, icon: FileCheck2 },
-    { label: "Asset Transfers", href: ROUTES.TRANSFERS, icon: GitCompare },
+    { label: "Dashboard", href: ROUTES.DASHBOARD, icon: LayoutDashboard, roles: allRoles },
+    { label: "Assets Directory", href: ROUTES.ASSETS, icon: Package, roles: allRoles },
+    { label: "Allocations", href: ROUTES.ALLOCATIONS, icon: UserCheck, roles: approverRoles },
+    { label: "Resource Bookings", href: ROUTES.BOOKINGS, icon: CalendarDays, roles: allRoles },
+    { label: "Maintenance Requests", href: ROUTES.MAINTENANCE, icon: Wrench, roles: allRoles },
+    { label: "Audits & Registers", href: ROUTES.AUDITS, icon: FileCheck2, roles: approverRoles },
+    { label: "Asset Transfers", href: ROUTES.TRANSFERS, icon: GitCompare, roles: approverRoles },
   ];
 
   const utilityNavigation: NavigationItem[] = [
-    { label: "Reports & Analytics", href: ROUTES.REPORTS, icon: BarChart3 },
-    { label: "Notifications", href: ROUTES.NOTIFICATIONS, icon: Bell },
-    { label: "Activity Logs", href: ROUTES.ACTIVITY_LOGS, icon: History },
+    { label: "Reports & Analytics", href: ROUTES.REPORTS, icon: BarChart3, roles: approverRoles },
+    { label: "Notifications", href: ROUTES.NOTIFICATIONS, icon: Bell, roles: allRoles },
+    { label: "Activity Logs", href: ROUTES.ACTIVITY_LOGS, icon: History, roles: managerRoles },
   ];
 
   const settingsNavigation: NavigationItem[] = [
-    { label: "User Management", href: ROUTES.SETTINGS.USERS, icon: Users },
-    { label: "Departments", href: ROUTES.SETTINGS.DEPARTMENTS, icon: Building2 },
-    { label: "Organization", href: ROUTES.SETTINGS.ORGANIZATION, icon: Building },
+    { label: "User Management", href: ROUTES.SETTINGS.USERS, icon: Users, roles: adminRoles },
+    { label: "Departments", href: ROUTES.SETTINGS.DEPARTMENTS, icon: Building2, roles: adminRoles },
+    { label: "Organization", href: ROUTES.SETTINGS.ORGANIZATION, icon: Building, roles: adminRoles },
   ];
+
+  const visibleItems = (items: NavigationItem[]) =>
+    items.filter((item) => !item.roles || (currentRole && item.roles.includes(currentRole)));
 
   const renderNavList = (items: NavigationItem[]) => (
     <ul className="flex flex-col gap-1 px-3">
-      {items.map((item) => {
+      {visibleItems(items).map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
         return (
@@ -115,12 +132,14 @@ export default function AppSidebar() {
           {renderNavList(utilityNavigation)}
         </div>
 
+        {visibleItems(settingsNavigation).length > 0 && (
         <div>
           <span className="block px-6 text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--color-sidebar-muted-foreground))] mb-3">
             Settings
           </span>
           {renderNavList(settingsNavigation)}
         </div>
+        )}
       </div>
 
       {/* User block & logout */}

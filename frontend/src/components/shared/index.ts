@@ -9,3 +9,4 @@ export * from "./SearchBar";
 export * from "./FilterBar";
 export * from "./DataTable";
 export * from "./ConfirmationDialog";
+export * from "./ModuleWorkbench";

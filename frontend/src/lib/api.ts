@@ -1,6 +1,7 @@
 /**
- * Axios API Client with JWT interceptors
- * Handles: base URL, auth headers, token refresh, error normalization
+ * Axios API Client with JWT interceptors.
+ * The current Spring Boot auth contract returns an access token only, so 401
+ * responses clear the session instead of calling a non-existent refresh route.
  */
 import axios, {
   type AxiosError,
@@ -9,8 +10,6 @@ import axios, {
 } from "axios";
 import { API_BASE_URL, STORAGE_KEYS } from "./constants";
 
-// ─── Create Axios Instance ────────────────────────────────────────────────────
-
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -18,8 +17,6 @@ const api = axios.create({
   },
   timeout: 30000,
 });
-
-// ─── Request Interceptor: Attach JWT Token ────────────────────────────────────
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -34,85 +31,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ─── Response Interceptor: Handle Errors & Token Refresh ─────────────────────
-
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
-
-function processQueue(error: AxiosError | null, token: string | null = null) {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-}
-
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & {
-      _retry?: boolean;
-    };
-
-    // 401 Unauthorized: attempt token refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      const refreshToken =
-        typeof window !== "undefined"
-          ? localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
-          : null;
-
-      if (!refreshToken) {
-        processQueue(error, null);
-        isRefreshing = false;
-        clearAuthStorage();
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
-        return Promise.reject(error);
-      }
-
-      try {
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
-        const { accessToken } = response.data.data.tokens;
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-        }
-
-        processQueue(null, accessToken);
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError as AxiosError, null);
-        clearAuthStorage();
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      clearAuthStorage();
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
       }
     }
 
