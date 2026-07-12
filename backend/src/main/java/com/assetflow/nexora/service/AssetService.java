@@ -4,11 +4,11 @@ import com.assetflow.nexora.dto.*;
 import com.assetflow.nexora.entity.*;
 import com.assetflow.nexora.exception.ResourceNotFoundException;
 import com.assetflow.nexora.repository.*;
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,12 +25,13 @@ public class AssetService {
     private final AssetStatusHistoryRepository history;
     private final AssetAllocationRepository allocations;
     private final MaintenanceRequestRepository maintenance;
+    private final JdbcTemplate jdbc;
 
     public AssetService(AssetRepository assets, AssetCategoryRepository categories, UserRepository users,
             DepartmentRepository departments, CategoryCustomFieldRepository fields,
             AssetCustomFieldValueRepository values, AssetDocumentRepository documents,
             AssetStatusHistoryRepository history, AssetAllocationRepository allocations,
-            MaintenanceRequestRepository maintenance) {
+            MaintenanceRequestRepository maintenance, JdbcTemplate jdbc) {
         this.assets = assets;
         this.categories = categories;
         this.users = users;
@@ -41,26 +42,20 @@ public class AssetService {
         this.history = history;
         this.allocations = allocations;
         this.maintenance = maintenance;
+        this.jdbc = jdbc;
     }
 
     public AssetDetailResponse create(AssetCreateRequest request) {
         validateReferences(request.categoryId(), request.owningDepartmentId(), request.createdBy());
-        Asset asset = new Asset();
-        asset.assetTag = blankToNull(request.assetTag());
-        asset.name = request.name();
-        asset.categoryId = request.categoryId();
-        asset.serialNumber = blankToNull(request.serialNumber());
-        asset.qrCode = blankToNull(request.qrCode());
-        asset.acquisitionDate = request.acquisitionDate();
-        asset.acquisitionCost = request.acquisitionCost();
-        asset.condition = request.condition();
-        asset.location = blankToNull(request.location());
-        asset.bookable = request.bookable();
-        asset.owningDepartmentId = request.owningDepartmentId();
-        asset.createdBy = request.createdBy();
-        asset = assets.saveAndFlush(asset);
-        replaceCustomValues(asset.id, asset.categoryId, request.customFields());
-        return detail(asset);
+        validateCondition(request.condition());
+        Long assetId = jdbc.queryForObject(
+                "INSERT INTO assets (asset_tag, name, category_id, serial_number, qr_code, acquisition_date, acquisition_cost, condition, location, status, is_bookable, owning_department_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS asset_condition), ?, CAST('Available' AS asset_status), ?, ?, ?) RETURNING asset_id",
+                Long.class, blankToNull(request.assetTag()), request.name(), request.categoryId(),
+                blankToNull(request.serialNumber()), blankToNull(request.qrCode()), request.acquisitionDate(),
+                request.acquisitionCost(), request.condition(), blankToNull(request.location()), request.bookable(),
+                request.owningDepartmentId(), request.createdBy());
+        replaceCustomValues(assetId, request.categoryId(), request.customFields());
+        return detail(find(assetId));
     }
 
     @Transactional(readOnly = true)
@@ -68,14 +63,15 @@ public class AssetService {
             String status, Long departmentId, String location) {
         Specification<Asset> specification = Specification.where(null);
         specification = specification.and(equal("assetTag", tag)).and(equal("serialNumber", serialNumber))
-                .and(equal("qrCode", qrCode)).and(equal("categoryId", categoryId)).and(equal("status", status))
+                .and(equal("qrCode", qrCode)).and(equal("categoryId", categoryId))
                 .and(equal("owningDepartmentId", departmentId)).and(equal("location", location));
         if (search != null && !search.isBlank())
             specification = specification.and((root, query, builder) -> builder.or(
                     builder.like(builder.lower(root.get("assetTag")), like(search)),
                     builder.like(builder.lower(root.get("serialNumber")), like(search)),
                     builder.like(builder.lower(root.get("name")), like(search))));
-        return assets.findAll(specification).stream().map(this::response).toList();
+        return assets.findAll(specification).stream().filter(asset -> status == null || status.equals(asset.status))
+                .map(this::response).toList();
     }
 
     @Transactional(readOnly = true)
@@ -85,37 +81,28 @@ public class AssetService {
 
     public AssetDetailResponse update(Long id, AssetUpdateRequest request) {
         validateReferences(request.categoryId(), request.owningDepartmentId(), null);
-        Asset asset = find(id);
-        asset.name = request.name();
-        asset.categoryId = request.categoryId();
-        asset.serialNumber = blankToNull(request.serialNumber());
-        asset.qrCode = blankToNull(request.qrCode());
-        asset.acquisitionDate = request.acquisitionDate();
-        asset.acquisitionCost = request.acquisitionCost();
-        asset.condition = request.condition();
-        asset.location = blankToNull(request.location());
-        asset.bookable = request.bookable();
-        asset.owningDepartmentId = request.owningDepartmentId();
-        assets.save(asset);
-        replaceCustomValues(asset.id, asset.categoryId, request.customFields());
-        return detail(asset);
+        validateCondition(request.condition());
+        find(id);
+        jdbc.update(
+                "UPDATE assets SET name=?, category_id=?, serial_number=?, qr_code=?, acquisition_date=?, acquisition_cost=?, condition=CAST(? AS asset_condition), location=?, is_bookable=?, owning_department_id=? WHERE asset_id=?",
+                request.name(), request.categoryId(), blankToNull(request.serialNumber()),
+                blankToNull(request.qrCode()), request.acquisitionDate(), request.acquisitionCost(),
+                request.condition(), blankToNull(request.location()), request.bookable(), request.owningDepartmentId(),
+                id);
+        replaceCustomValues(id, request.categoryId(), request.customFields());
+        return detail(find(id));
     }
 
     public AssetDetailResponse updateStatus(Long id, AssetStatusUpdateRequest request) {
         Asset asset = find(id);
         users.findById(request.changedBy()).orElseThrow(() -> missing("User", request.changedBy()));
+        validateStatus(request.status());
         String old = asset.status;
-        asset.status = request.status();
-        assets.save(asset);
-        AssetStatusHistory event = new AssetStatusHistory();
-        event.assetId = id;
-        event.fromStatus = old;
-        event.toStatus = request.status();
-        event.reason = blankToNull(request.reason());
-        event.changedBy = request.changedBy();
-        event.changedAt = OffsetDateTime.now(ZoneOffset.UTC);
-        history.save(event);
-        return detail(asset);
+        jdbc.update("UPDATE assets SET status=CAST(? AS asset_status) WHERE asset_id=?", request.status(), id);
+        jdbc.update(
+                "INSERT INTO asset_status_history (asset_id, from_status, to_status, reason, changed_by) VALUES (?, CAST(? AS asset_status), CAST(? AS asset_status), ?, ?)",
+                id, old, request.status(), blankToNull(request.reason()), request.changedBy());
+        return detail(find(id));
     }
 
     public AssetDocumentResponse addDocument(Long assetId, String fileUrl, String fileType, Long uploadedBy) {
@@ -174,7 +161,9 @@ public class AssetService {
     }
 
     private Specification<Asset> equal(String property, Object value) {
-        return value == null ? null : (root, query, builder) -> builder.equal(root.get(property), value);
+        if (value == null)
+            return null;
+        return (root, query, builder) -> builder.equal(root.get(property), value);
     }
 
     private String like(String value) {
@@ -183,6 +172,17 @@ public class AssetService {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void validateCondition(String condition) {
+        if (!Set.of("New", "Good", "Fair", "Poor", "Damaged").contains(condition))
+            throw new IllegalArgumentException("Invalid asset condition");
+    }
+
+    private void validateStatus(String status) {
+        if (!Set.of("Available", "Allocated", "Reserved", "Under Maintenance", "Lost", "Retired", "Disposed")
+                .contains(status))
+            throw new IllegalArgumentException("Invalid asset status");
     }
 
     private AssetResponse response(Asset a) {
