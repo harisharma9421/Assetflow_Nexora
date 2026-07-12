@@ -2,9 +2,13 @@ package com.assetflow.nexora.service;
 
 import com.assetflow.nexora.dto.auth.AuthResponse;
 import com.assetflow.nexora.dto.auth.AuthUserResponse;
+import com.assetflow.nexora.dto.auth.ForgotPasswordRequest;
+import com.assetflow.nexora.dto.auth.ForgotPasswordResponse;
 import com.assetflow.nexora.dto.auth.LoginRequest;
 import com.assetflow.nexora.dto.auth.PromoteUserRoleRequest;
+import com.assetflow.nexora.dto.auth.ResetPasswordRequest;
 import com.assetflow.nexora.dto.auth.SignupRequest;
+import com.assetflow.nexora.entity.PasswordResetToken;
 import com.assetflow.nexora.entity.Role;
 import com.assetflow.nexora.entity.User;
 import com.assetflow.nexora.exception.BadRequestException;
@@ -12,10 +16,17 @@ import com.assetflow.nexora.exception.ResourceNotFoundException;
 import com.assetflow.nexora.exception.UnauthorizedException;
 import com.assetflow.nexora.repository.RoleRepository;
 import com.assetflow.nexora.repository.UserRepository;
+import com.assetflow.nexora.repository.PasswordResetTokenRepository;
 import com.assetflow.nexora.security.JwtService;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,18 +38,25 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final long passwordResetExpirationMinutes;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthService(
             UserRepository userRepository,
             RoleRepository roleRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            JwtService jwtService,
+            @Value("${app.password-reset.expiration-minutes}") long passwordResetExpirationMinutes) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.passwordResetExpirationMinutes = passwordResetExpirationMinutes;
     }
 
     @Transactional
@@ -97,6 +115,41 @@ public class AuthService {
     }
 
     @Transactional
+    public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest request) {
+        String normalizedEmail = request.email().trim().toLowerCase();
+        return userRepository.findByEmail(normalizedEmail)
+                .map(this::createPasswordResetToken)
+                .orElseGet(() -> new ForgotPasswordResponse(
+                        "If the email is registered, a reset token has been generated.",
+                        null,
+                        null));
+    }
+
+    @Transactional
+    public AuthUserResponse resetPassword(ResetPasswordRequest request) {
+        String tokenHash = hashToken(request.token());
+        PasswordResetToken resetToken = passwordResetTokenRepository.findFirstByTokenHashOrderByCreatedAtDesc(tokenHash)
+                .orElseThrow(() -> new BadRequestException("Password reset token is invalid or expired"));
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        if (resetToken.usedAt != null || resetToken.expiresAt.isBefore(now)) {
+            throw new BadRequestException("Password reset token is invalid or expired");
+        }
+
+        User user = userRepository.findById(resetToken.userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Password reset user was not found"));
+        Role role = roleRepository.findById(user.roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("User role is not configured"));
+
+        user.passwordHash = passwordEncoder.encode(request.newPassword());
+        resetToken.usedAt = now;
+        passwordResetTokenRepository.save(resetToken);
+        User savedUser = userRepository.save(user);
+
+        return toAuthUserResponse(savedUser, role);
+    }
+
+    @Transactional
     public AuthUserResponse promoteUserRole(
             Long userId,
             PromoteUserRoleRequest request,
@@ -126,6 +179,36 @@ public class AuthService {
 
         User savedUser = userRepository.save(targetUser);
         return toAuthUserResponse(savedUser, requestedRole);
+    }
+
+    private ForgotPasswordResponse createPasswordResetToken(User user) {
+        String rawToken = generateRawToken();
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.userId = user.id;
+        resetToken.tokenHash = hashToken(rawToken);
+        resetToken.expiresAt = OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(passwordResetExpirationMinutes);
+
+        PasswordResetToken savedToken = passwordResetTokenRepository.save(resetToken);
+        return new ForgotPasswordResponse(
+                "If the email is registered, a reset token has been generated.",
+                rawToken,
+                savedToken.expiresAt);
+    }
+
+    private String generateRawToken() {
+        byte[] bytes = new byte[32];
+        secureRandom.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hashToken(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 hashing is not available", exception);
+        }
     }
 
     public AuthUserResponse toAuthUserResponse(User user, Role role) {

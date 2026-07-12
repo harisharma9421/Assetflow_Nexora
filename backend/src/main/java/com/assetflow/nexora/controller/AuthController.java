@@ -2,7 +2,10 @@ package com.assetflow.nexora.controller;
 
 import com.assetflow.nexora.dto.auth.AuthResponse;
 import com.assetflow.nexora.dto.auth.AuthUserResponse;
+import com.assetflow.nexora.dto.auth.ForgotPasswordRequest;
+import com.assetflow.nexora.dto.auth.ForgotPasswordResponse;
 import com.assetflow.nexora.dto.auth.LoginRequest;
+import com.assetflow.nexora.dto.auth.ResetPasswordRequest;
 import com.assetflow.nexora.dto.auth.SignupRequest;
 import com.assetflow.nexora.service.AuthService;
 import jakarta.validation.Valid;
@@ -38,5 +41,17 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AuthUserResponse> me(Principal principal) {
         return ResponseEntity.ok(authService.currentUser(principal.getName()));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ForgotPasswordResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.forgotPassword(request));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<AuthUserResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(authService.resetPassword(request));
     }
 }
