@@ -127,6 +127,12 @@ public class AssetService {
                 documents.findByAssetIdOrderByUploadedAtDesc(id).stream().map(this::documentResponse).toList());
     }
 
+    @Transactional(readOnly = true)
+    public Optional<AssetAllocationResponse> getCurrentHolder(Long assetId) {
+        find(assetId);
+        return allocations.findByAssetIdAndStatus(assetId, "Active").map(this::allocationResponse);
+    }
+
     private void validateReferences(Long categoryId, Long departmentId, Long userId) {
         categories.findById(categoryId).orElseThrow(() -> missing("Asset category", categoryId));
         if (departmentId != null)

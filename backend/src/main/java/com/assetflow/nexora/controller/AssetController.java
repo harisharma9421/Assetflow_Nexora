@@ -65,6 +65,11 @@ public class AssetController {
         return assets.history(assetId);
     }
 
+    @GetMapping("/{assetId}/holder")
+    public ResponseEntity<AssetAllocationResponse> getCurrentHolder(@PathVariable Long assetId) {
+        return assets.getCurrentHolder(assetId).map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
+    }
+
     @GetMapping(value = "/{assetId}/qr", produces = MediaType.IMAGE_PNG_VALUE)
     public byte[] qr(@PathVariable Long assetId) {
         AssetDetailResponse asset = assets.get(assetId);

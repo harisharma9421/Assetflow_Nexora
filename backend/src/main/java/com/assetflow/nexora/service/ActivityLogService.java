@@ -1,21 +1,37 @@
 package com.assetflow.nexora.service;
 
 import com.assetflow.nexora.dto.ActivityLogResponse;
+import com.assetflow.nexora.entity.ActivityLog;
+import com.assetflow.nexora.repository.ActivityLogRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
 public class ActivityLogService {
+    private static final Logger logger = LoggerFactory.getLogger(ActivityLogService.class);
+
+    private final ActivityLogRepository activityLogs;
+    private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbc;
 
-    public ActivityLogService(JdbcTemplate jdbc) {
+    public ActivityLogService(ActivityLogRepository activityLogs, ObjectMapper objectMapper, JdbcTemplate jdbc) {
+        this.activityLogs = activityLogs;
+        this.objectMapper = objectMapper;
         this.jdbc = jdbc;
     }
 
+    @Transactional(readOnly = true)
     public List<ActivityLogResponse> list(String action, String entityType, Long entityId, OffsetDateTime from,
             OffsetDateTime to) {
         StringBuilder sql = new StringBuilder(
@@ -42,6 +58,30 @@ public class ActivityLogService {
                         r.getLong("entity_id"), r.getString("details"), r.getString("ip_address"),
                         r.getObject("created_at", OffsetDateTime.class)),
                 values.toArray());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void log(String action, String entityType, Long entityId, Long userId, Map<String, Object> details) {
+        try {
+            ActivityLog log = new ActivityLog();
+            log.action = action;
+            log.entityType = entityType;
+            log.entityId = entityId;
+            log.userId = userId;
+            log.details = details != null ? objectMapper.writeValueAsString(details) : null;
+            log.createdAt = OffsetDateTime.now(ZoneOffset.UTC);
+
+            activityLogs.save(log);
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to serialize activity log details", e);
+        } catch (Exception e) {
+            logger.error("Failed to create activity log", e);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void log(String action, String entityType, Long entityId, Long userId) {
+        log(action, entityType, entityId, userId, null);
     }
 
     private void add(StringBuilder sql, List<Object> values, String column, String value) {

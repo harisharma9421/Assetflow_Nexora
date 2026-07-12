@@ -42,6 +42,20 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, List.of());
     }
 
+    @ExceptionHandler(AllocationConflictException.class)
+    public ResponseEntity<Object> handleAllocationConflict(
+            AllocationConflictException exception,
+            HttpServletRequest request) {
+        var response = new java.util.HashMap<String, Object>();
+        response.put("timestamp", OffsetDateTime.now(ZoneOffset.UTC));
+        response.put("status", HttpStatus.CONFLICT.value());
+        response.put("error", "Asset Already Allocated");
+        response.put("message", exception.getMessage());
+        response.put("path", request.getRequestURI());
+        response.put("currentHolder", exception.getCurrentHolder());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
             HttpServletRequest request) {
