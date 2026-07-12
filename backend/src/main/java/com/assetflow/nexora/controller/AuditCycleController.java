@@ -1,5 +1,7 @@
 package com.assetflow.nexora.controller;
 
+import com.assetflow.nexora.dto.AuditCycleAuditorAssignRequest;
+import com.assetflow.nexora.dto.AuditCycleAuditorDto;
 import com.assetflow.nexora.dto.AuditCycleCreateRequest;
 import com.assetflow.nexora.dto.AuditCycleResponse;
 import com.assetflow.nexora.service.AuditCycleService;
@@ -51,6 +53,31 @@ public class AuditCycleController {
     @Operation(summary = "Get audit cycle details", description = "Get detailed information about a specific audit cycle")
     public ResponseEntity<AuditCycleResponse> getAuditCycle(@PathVariable Long auditCycleId) {
         AuditCycleResponse response = auditCycleService.getAuditCycle(auditCycleId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{auditCycleId}/auditors")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Assign auditor to audit cycle", description = "Assign an auditor user to an audit cycle")
+    public ResponseEntity<AuditCycleAuditorDto> assignAuditor(@PathVariable Long auditCycleId,
+            @Valid @RequestBody AuditCycleAuditorAssignRequest request) {
+        AuditCycleAuditorDto response = auditCycleService.assignAuditor(auditCycleId, request.auditorUserId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{auditCycleId}/auditors")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "List auditors", description = "List all auditors assigned to an audit cycle")
+    public ResponseEntity<List<AuditCycleAuditorDto>> listAuditors(@PathVariable Long auditCycleId) {
+        List<AuditCycleAuditorDto> response = auditCycleService.listAuditors(auditCycleId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{auditCycleId}/start")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Start audit cycle", description = "Start an audit cycle and generate scoped asset list")
+    public ResponseEntity<AuditCycleResponse> startAuditCycle(@PathVariable Long auditCycleId) {
+        AuditCycleResponse response = auditCycleService.startAuditCycle(auditCycleId);
         return ResponseEntity.ok(response);
     }
 }

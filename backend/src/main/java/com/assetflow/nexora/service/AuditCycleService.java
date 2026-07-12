@@ -1,10 +1,17 @@
 package com.assetflow.nexora.service;
 
+import com.assetflow.nexora.dto.AuditCycleAuditorDto;
 import com.assetflow.nexora.dto.AuditCycleCreateRequest;
 import com.assetflow.nexora.dto.AuditCycleResponse;
+import com.assetflow.nexora.entity.Asset;
 import com.assetflow.nexora.entity.AuditCycle;
+import com.assetflow.nexora.entity.AuditCycleAsset;
+import com.assetflow.nexora.entity.AuditCycleAuditor;
 import com.assetflow.nexora.exception.BadRequestException;
 import com.assetflow.nexora.exception.ResourceNotFoundException;
+import com.assetflow.nexora.repository.AssetRepository;
+import com.assetflow.nexora.repository.AuditCycleAssetRepository;
+import com.assetflow.nexora.repository.AuditCycleAuditorRepository;
 import com.assetflow.nexora.repository.AuditCycleRepository;
 import com.assetflow.nexora.repository.UserRepository;
 import java.time.OffsetDateTime;
@@ -17,10 +24,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AuditCycleService {
     private final AuditCycleRepository auditCycles;
+    private final AuditCycleAuditorRepository auditors;
+    private final AuditCycleAssetRepository auditCycleAssets;
+    private final AssetRepository assets;
     private final UserRepository users;
 
-    public AuditCycleService(AuditCycleRepository auditCycles, UserRepository users) {
+    public AuditCycleService(AuditCycleRepository auditCycles, AuditCycleAuditorRepository auditors,
+            AuditCycleAssetRepository auditCycleAssets, AssetRepository assets, UserRepository users) {
         this.auditCycles = auditCycles;
+        this.auditors = auditors;
+        this.auditCycleAssets = auditCycleAssets;
+        this.assets = assets;
         this.users = users;
     }
 
@@ -81,5 +95,86 @@ public class AuditCycleService {
     private AuditCycleResponse toResponse(AuditCycle a) {
         return new AuditCycleResponse(a.id, a.name, a.scopeDepartmentId, a.scopeLocation, a.startDate, a.endDate,
                 a.status, a.createdBy, a.closedBy, a.closedAt, a.createdAt);
+    }
+
+    public AuditCycleAuditorDto assignAuditor(Long auditCycleId, Long auditorUserId) {
+        // Validate audit cycle exists and is in Planned status
+        AuditCycle auditCycle = findAuditCycle(auditCycleId);
+        if (!"Planned".equals(auditCycle.status)) {
+            throw new BadRequestException("Auditors can only be assigned to planned audit cycles");
+        }
+
+        // Validate auditor user exists
+        users.findById(auditorUserId).orElseThrow(
+                () -> new ResourceNotFoundException("User with id " + auditorUserId + " was not found"));
+
+        // Check if auditor is already assigned
+        AuditCycleAuditor.Key key = new AuditCycleAuditor.Key();
+        key.auditCycleId = auditCycleId;
+        key.auditorUserId = auditorUserId;
+
+        if (auditors.findById(key).isPresent()) {
+            throw new BadRequestException("Auditor is already assigned to this audit cycle");
+        }
+
+        // Assign auditor
+        AuditCycleAuditor auditor = new AuditCycleAuditor();
+        auditor.auditCycleId = auditCycleId;
+        auditor.auditorUserId = auditorUserId;
+        auditor.assignedAt = OffsetDateTime.now(ZoneOffset.UTC);
+
+        AuditCycleAuditor saved = auditors.save(auditor);
+        return new AuditCycleAuditorDto(saved.auditCycleId, saved.auditorUserId, saved.assignedAt);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuditCycleAuditorDto> listAuditors(Long auditCycleId) {
+        // Validate audit cycle exists
+        findAuditCycle(auditCycleId);
+
+        return auditors.findByAuditCycleId(auditCycleId).stream()
+                .map(a -> new AuditCycleAuditorDto(a.auditCycleId, a.auditorUserId, a.assignedAt)).toList();
+    }
+
+    public AuditCycleResponse startAuditCycle(Long auditCycleId) {
+        AuditCycle auditCycle = findAuditCycle(auditCycleId);
+
+        // Validate audit cycle is in Planned status
+        if (!"Planned".equals(auditCycle.status)) {
+            throw new BadRequestException("Only planned audit cycles can be started");
+        }
+
+        // Validate at least one auditor is assigned
+        List<AuditCycleAuditor> assignedAuditors = auditors.findByAuditCycleId(auditCycleId);
+        if (assignedAuditors.isEmpty()) {
+            throw new BadRequestException("At least one auditor must be assigned before starting the audit cycle");
+        }
+
+        // Generate audit cycle assets based on scope
+        List<Asset> scopedAssets;
+        if (auditCycle.scopeDepartmentId != null) {
+            scopedAssets = assets.findAll().stream()
+                    .filter(a -> auditCycle.scopeDepartmentId.equals(a.owningDepartmentId)).toList();
+        } else if (auditCycle.scopeLocation != null && !auditCycle.scopeLocation.isBlank()) {
+            scopedAssets = assets.findAll().stream()
+                    .filter(a -> auditCycle.scopeLocation.equals(a.location)).toList();
+        } else {
+            throw new BadRequestException("Audit cycle must have a valid scope");
+        }
+
+        // Create audit cycle asset entries
+        for (Asset asset : scopedAssets) {
+            AuditCycleAsset auditAsset = new AuditCycleAsset();
+            auditAsset.auditCycleId = auditCycleId;
+            auditAsset.assetId = asset.id;
+            auditAsset.verificationStatus = "Pending";
+            auditCycleAssets.save(auditAsset);
+        }
+
+        // Update audit cycle status to In Progress
+        auditCycle.status = "In Progress";
+        AuditCycle saved = auditCycles.save(auditCycle);
+
+        return toResponse(saved);
     }
 }
