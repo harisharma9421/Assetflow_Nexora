@@ -1,6 +1,8 @@
 package com.assetflow.nexora.controller;
 
 import com.assetflow.nexora.dto.MaintenanceAttachmentDto;
+import com.assetflow.nexora.dto.MaintenanceApproveRequest;
+import com.assetflow.nexora.dto.MaintenanceRejectRequest;
 import com.assetflow.nexora.dto.MaintenanceRequestCreateRequest;
 import com.assetflow.nexora.dto.MaintenanceRequestResponse;
 import com.assetflow.nexora.service.MaintenanceService;
@@ -74,6 +76,29 @@ public class MaintenanceController {
     @Operation(summary = "List maintenance attachments", description = "List all attachments for a maintenance request")
     public ResponseEntity<List<MaintenanceAttachmentDto>> listAttachments(@PathVariable Long requestId) {
         List<MaintenanceAttachmentDto> response = maintenanceService.listAttachments(requestId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{requestId}/approve")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Approve maintenance request", description = "Asset Manager approves a maintenance request and sets asset to Under Maintenance")
+    public ResponseEntity<MaintenanceRequestResponse> approveMaintenance(@PathVariable Long requestId,
+            @Valid @RequestBody MaintenanceApproveRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        MaintenanceRequestResponse response = maintenanceService.approveMaintenance(requestId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{requestId}/reject")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Reject maintenance request", description = "Asset Manager rejects a maintenance request with a reason")
+    public ResponseEntity<MaintenanceRequestResponse> rejectMaintenance(@PathVariable Long requestId,
+            @Valid @RequestBody MaintenanceRejectRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        MaintenanceRequestResponse response = maintenanceService.rejectMaintenance(requestId,
+                request.rejectionReason(), userId);
         return ResponseEntity.ok(response);
     }
 }

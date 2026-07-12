@@ -139,4 +139,55 @@ public class MaintenanceService {
                         a.uploadedAt))
                 .toList();
     }
+
+    public MaintenanceRequestResponse approveMaintenance(Long requestId, Long approvedBy) {
+        MaintenanceRequest request = findMaintenanceRequest(requestId);
+
+        // Validate request is in Pending status
+        if (!"Pending".equals(request.status)) {
+            throw new BadRequestException("Only pending maintenance requests can be approved");
+        }
+
+        // Validate approver exists and is Asset Manager
+        users.findById(approvedBy).orElseThrow(
+                () -> new ResourceNotFoundException("User with id " + approvedBy + " was not found"));
+
+        // Approve the request
+        request.status = "Approved";
+        request.approvedBy = approvedBy;
+        request.approvedAt = OffsetDateTime.now(ZoneOffset.UTC);
+
+        // Update asset status to Under Maintenance
+        Asset asset = assets.findById(request.assetId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Asset with id " + request.assetId + " was not found"));
+        asset.status = "Under Maintenance";
+        assets.save(asset);
+
+        MaintenanceRequest saved = maintenanceRequests.save(request);
+        return toResponse(saved);
+    }
+
+    public MaintenanceRequestResponse rejectMaintenance(Long requestId, String rejectionReason,
+            Long rejectedBy) {
+        MaintenanceRequest request = findMaintenanceRequest(requestId);
+
+        // Validate request is in Pending status
+        if (!"Pending".equals(request.status)) {
+            throw new BadRequestException("Only pending maintenance requests can be rejected");
+        }
+
+        // Validate rejector exists
+        users.findById(rejectedBy).orElseThrow(
+                () -> new ResourceNotFoundException("User with id " + rejectedBy + " was not found"));
+
+        // Reject the request
+        request.status = "Rejected";
+        request.approvedBy = rejectedBy; // Track who rejected
+        request.approvedAt = OffsetDateTime.now(ZoneOffset.UTC);
+        request.rejectionReason = rejectionReason;
+
+        MaintenanceRequest saved = maintenanceRequests.save(request);
+        return toResponse(saved);
+    }
 }
