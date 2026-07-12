@@ -1,0 +1,1870 @@
+{
+  "info": {
+    "name": "AssetFlow Backend API - Full Contract",
+    "description": "Full backend API contract for AssetFlow, based on the organizer PS and mandatory features. Import this collection so frontend can build against the agreed endpoint set while backend implementation progresses stage by stage.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('response is not 5xx', function () {",
+          "  pm.expect(pm.response.code).to.be.below(500);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Foundation",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Application Version",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/version"
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Swagger OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v3/api-docs"
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Error Contract Example",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/debug/error-contract",
+            "description": "Optional endpoint for validating common error response shape during development."
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Authentication and RBAC",
+      "item": [
+        {
+          "name": "Signup Employee Only",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/signup",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Demo Employee\",\n  \"email\": \"employee@example.com\",\n  \"password\": \"Password@123\",\n  \"departmentId\": \"{{departmentId}}\"\n}"
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password@123\"\n}"
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) pm.environment.set('accessToken', json.accessToken);",
+                  "if (json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);",
+                  "if (json.user?.id) pm.environment.set('userId', json.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current User Session",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/refresh",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/logout",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/forgot-password",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"employee@example.com\"\n}"
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/reset-password",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{passwordResetToken}}\",\n  \"newPassword\": \"Password@123\"\n}"
+            }
+          },
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/roles"
+          }
+        },
+        {
+          "name": "Promote User Role",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/users/{{userId}}/role",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleName\": \"Asset Manager\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/{{userId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Inactive\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/users/{{userId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Active\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Organization Setup",
+      "item": [
+        {
+          "name": "List Departments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/departments"
+          }
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/departments",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"parentDepartmentId\": null,\n  \"headUserId\": null,\n  \"status\": \"Active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Department",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/departments/{{departmentId}}"
+          }
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/departments/{{departmentId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering\",\n  \"parentDepartmentId\": null,\n  \"headUserId\": \"{{userId}}\",\n  \"status\": \"Active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Department Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/departments/{{departmentId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Inactive\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Asset Categories",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/asset-categories"
+          }
+        },
+        {
+          "name": "Create Asset Category",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/asset-categories",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Laptops, projectors, and electronic devices\",\n  \"status\": \"Active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Asset Category",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/asset-categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Update Asset Category",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/asset-categories/{{categoryId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Updated description\",\n  \"status\": \"Active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Category Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/asset-categories/{{categoryId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Inactive\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Category Fields",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/asset-categories/{{categoryId}}/fields"
+          }
+        },
+        {
+          "name": "Create Category Field",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/asset-categories/{{categoryId}}/fields",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fieldName\": \"Warranty Period\",\n  \"fieldType\": \"Text\",\n  \"isRequired\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Category Field",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/category-fields/{{fieldId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fieldName\": \"Warranty Period\",\n  \"fieldType\": \"Text\",\n  \"isRequired\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Category Field",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/category-fields/{{fieldId}}"
+          }
+        },
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users?page=0&size=20&departmentId={{departmentId}}&status=Active"
+          }
+        },
+        {
+          "name": "Get Employee",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Demo Employee\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"roleId\": \"{{roleId}}\",\n  \"status\": \"Active\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Asset Registration and Directory",
+      "item": [
+        {
+          "name": "Register Asset",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/assets",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dell Laptop\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"serialNumber\": \"DL-2026-001\",\n  \"acquisitionDate\": \"2026-07-12\",\n  \"acquisitionCost\": 75000,\n  \"condition\": \"Good\",\n  \"location\": \"Bengaluru HQ\",\n  \"isBookable\": false,\n  \"owningDepartmentId\": \"{{departmentId}}\",\n  \"customFields\": [\n    {\n      \"fieldId\": \"{{fieldId}}\",\n      \"fieldValue\": \"3 years\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Search Assets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets?query=AF&status=Available&categoryId={{categoryId}}&departmentId={{departmentId}}&location=Bengaluru&page=0&size=20"
+          }
+        },
+        {
+          "name": "List Bookable Assets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets?isBookable=true&status=Available"
+          }
+        },
+        {
+          "name": "Get Asset Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}"
+          }
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/assets/{{assetId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dell Laptop\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"serialNumber\": \"DL-2026-001\",\n  \"acquisitionDate\": \"2026-07-12\",\n  \"acquisitionCost\": 75000,\n  \"condition\": \"Good\",\n  \"location\": \"Bengaluru HQ\",\n  \"isBookable\": false,\n  \"owningDepartmentId\": \"{{departmentId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Asset Lifecycle Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/assets/{{assetId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Retired\",\n  \"reason\": \"End of usable lifecycle\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Asset History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}/history"
+          }
+        },
+        {
+          "name": "Get Current Asset Holder",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}/holder"
+          }
+        },
+        {
+          "name": "Get Asset QR Code",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}/qr"
+          }
+        },
+        {
+          "name": "Regenerate Asset QR Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/assets/{{assetId}}/qr"
+          }
+        },
+        {
+          "name": "List Asset Documents",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}/documents"
+          }
+        },
+        {
+          "name": "Upload Asset Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "fileType",
+                  "value": "photo",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/assets/{{assetId}}/documents"
+          }
+        },
+        {
+          "name": "Delete Asset Document",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/asset-documents/{{documentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Asset Allocation, Return, and Transfer",
+      "item": [
+        {
+          "name": "List Allocations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/allocations?status=Active&holderEmployeeId={{userId}}&assetId={{assetId}}"
+          }
+        },
+        {
+          "name": "Allocate Asset To Employee",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/allocations",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"holderType\": \"Employee\",\n  \"holderEmployeeId\": \"{{userId}}\",\n  \"holderDepartmentId\": null,\n  \"expectedReturnDate\": \"2026-08-12\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Allocate Asset To Department",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/allocations",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"holderType\": \"Department\",\n  \"holderEmployeeId\": null,\n  \"holderDepartmentId\": \"{{departmentId}}\",\n  \"expectedReturnDate\": \"2026-08-12\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Allocation",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/allocations/{{allocationId}}"
+          }
+        },
+        {
+          "name": "Return Asset",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/allocations/{{allocationId}}/return",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnConditionNotes\": \"Returned in good condition\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Overdue Allocations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/allocations/overdue"
+          }
+        },
+        {
+          "name": "Create Transfer Request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/transfers",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"currentAllocationId\": \"{{allocationId}}\",\n  \"requestedToEmployeeId\": \"{{targetUserId}}\",\n  \"requestedToDepartmentId\": null,\n  \"reason\": \"Required for project work\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Transfer Requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/transfers?status=Requested"
+          }
+        },
+        {
+          "name": "Get Transfer Request",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/transfers/{{transferId}}"
+          }
+        },
+        {
+          "name": "Approve Transfer",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/transfers/{{transferId}}/approve",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Approved for reassignment\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject Transfer",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/transfers/{{transferId}}/reject",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Asset required by current holder\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Complete Transfer Reallocation",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/transfers/{{transferId}}/complete",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedReturnDate\": \"2026-08-20\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Resource Booking",
+      "item": [
+        {
+          "name": "List Bookable Resources",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/resources?categoryId={{categoryId}}&location=Bengaluru"
+          }
+        },
+        {
+          "name": "Get Resource Booking Calendar",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/resources/{{assetId}}/bookings?from=2026-07-13T00:00:00%2B05:30&to=2026-07-20T23:59:59%2B05:30"
+          }
+        },
+        {
+          "name": "List Bookings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bookings?status=Upcoming&bookedBy={{userId}}"
+          }
+        },
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bookings",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"purpose\": \"Team meeting\",\n  \"startTime\": \"2026-07-13T09:00:00+05:30\",\n  \"endTime\": \"2026-07-13T10:00:00+05:30\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Booking",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bookings/{{bookingId}}"
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bookings/{{bookingId}}/cancel",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Meeting cancelled\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reschedule Booking",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/bookings/{{bookingId}}/reschedule",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"2026-07-13T10:00:00+05:30\",\n  \"endTime\": \"2026-07-13T11:00:00+05:30\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mark Booking Ongoing",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bookings/{{bookingId}}/start"
+          }
+        },
+        {
+          "name": "Mark Booking Completed",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bookings/{{bookingId}}/complete"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Maintenance Workflow",
+      "item": [
+        {
+          "name": "List Maintenance Requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenance-requests?status=Pending&assetId={{assetId}}"
+          }
+        },
+        {
+          "name": "Raise Maintenance Request",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/maintenance-requests",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"issueDescription\": \"Screen flickering\",\n  \"priority\": \"High\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Maintenance Request",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}"
+          }
+        },
+        {
+          "name": "Approve Maintenance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/approve",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Approved for repair\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject Maintenance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/reject",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Duplicate request\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Assign Technician",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/assign-technician",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"technicianName\": \"Ravi Kumar\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Start Maintenance Work",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/start"
+          }
+        },
+        {
+          "name": "Resolve Maintenance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/resolve",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionNotes\": \"Display cable replaced\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Maintenance Attachments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/attachments"
+          }
+        },
+        {
+          "name": "Upload Maintenance Attachment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/maintenance-requests/{{maintenanceRequestId}}/attachments"
+          }
+        },
+        {
+          "name": "Delete Maintenance Attachment",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/maintenance-attachments/{{maintenanceAttachmentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Asset Audit",
+      "item": [
+        {
+          "name": "List Audit Cycles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-cycles?status=Planned"
+          }
+        },
+        {
+          "name": "Create Audit Cycle",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/audit-cycles",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Q3 Engineering Audit\",\n  \"scopeDepartmentId\": \"{{departmentId}}\",\n  \"scopeLocation\": null,\n  \"startDate\": \"2026-07-15\",\n  \"endDate\": \"2026-07-20\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Audit Cycle",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}"
+          }
+        },
+        {
+          "name": "Update Audit Cycle",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Q3 Engineering Audit\",\n  \"scopeDepartmentId\": \"{{departmentId}}\",\n  \"scopeLocation\": null,\n  \"startDate\": \"2026-07-15\",\n  \"endDate\": \"2026-07-20\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Assign Auditor",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}/auditors",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auditorUserId\": \"{{auditorUserId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove Auditor",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}/auditors/{{auditorUserId}}"
+          }
+        },
+        {
+          "name": "Start Audit Cycle",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}/start"
+          }
+        },
+        {
+          "name": "List Audit Assets",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}/assets"
+          }
+        },
+        {
+          "name": "Verify Audit Asset",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/audit-cycle-assets/{{auditCycleAssetId}}/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verificationStatus\": \"Verified\",\n  \"notes\": \"Asset found at expected location\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mark Audit Asset Missing",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/audit-cycle-assets/{{auditCycleAssetId}}/verify",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verificationStatus\": \"Missing\",\n  \"notes\": \"Not found at assigned desk\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Close Audit Cycle",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/audit-cycles/{{auditCycleId}}/close"
+          }
+        },
+        {
+          "name": "List Discrepancy Reports",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/discrepancy-reports?status=Open"
+          }
+        },
+        {
+          "name": "Get Discrepancy Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/discrepancy-reports/{{discrepancyId}}"
+          }
+        },
+        {
+          "name": "Resolve Discrepancy Report",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/discrepancy-reports/{{discrepancyId}}/resolve",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionNotes\": \"Asset recovered and verified\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Dashboard and Analytics",
+      "item": [
+        {
+          "name": "Dashboard KPIs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/kpis"
+          }
+        },
+        {
+          "name": "Dashboard Overdue Returns",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/overdue-returns"
+          }
+        },
+        {
+          "name": "Dashboard Recent Activity",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboard/recent-activity?limit=10"
+          }
+        },
+        {
+          "name": "Asset Utilization Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/asset-utilization?from=2026-07-01&to=2026-07-31"
+          }
+        },
+        {
+          "name": "Maintenance Frequency Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/maintenance-frequency?groupBy=category"
+          }
+        },
+        {
+          "name": "Department Allocation Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/department-allocation"
+          }
+        },
+        {
+          "name": "Resource Booking Heatmap",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/booking-heatmap?from=2026-07-01&to=2026-07-31"
+          }
+        },
+        {
+          "name": "Assets Due For Maintenance",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/assets-due-maintenance"
+          }
+        },
+        {
+          "name": "Assets Nearing Retirement",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/assets-nearing-retirement"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Notifications and Activity Logs",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications?unreadOnly=false&page=0&size=20"
+          }
+        },
+        {
+          "name": "Unread Notification Count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications/unread-count"
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/{{notificationId}}/read"
+          }
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notifications/read-all"
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/notifications/{{notificationId}}"
+          }
+        },
+        {
+          "name": "List Activity Logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/activity-logs?entityType=asset&entityId={{assetId}}&page=0&size=20"
+          }
+        },
+        {
+          "name": "Get Activity Log",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/activity-logs/{{activityLogId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Exports",
+      "item": [
+        {
+          "name": "Export Assets PDF",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/exports/assets.pdf?status=Available"
+          }
+        },
+        {
+          "name": "Export Assets Excel",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/exports/assets.xlsx?status=Available"
+          }
+        },
+        {
+          "name": "Export Audit Cycle PDF",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/exports/audit-cycles/{{auditCycleId}}.pdf"
+          }
+        },
+        {
+          "name": "Export Maintenance Excel",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/exports/maintenance.xlsx?from=2026-07-01&to=2026-07-31"
+          }
+        },
+        {
+          "name": "Export Department Allocation Excel",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/exports/department-allocation.xlsx"
+          }
+        },
+        {
+          "name": "Download Generated Report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/files/reports/{{reportFileName}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - File Access",
+      "item": [
+        {
+          "name": "Download Asset Document",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/files/uploads/{{documentFileName}}"
+          }
+        },
+        {
+          "name": "Download Maintenance Attachment",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/files/uploads/{{maintenanceFileName}}"
+          }
+        },
+        {
+          "name": "Download QR Image",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/files/qr/{{qrFileName}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Admin and Demo Utilities",
+      "item": [
+        {
+          "name": "Create Demo Seed Data",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/demo/seed"
+          }
+        },
+        {
+          "name": "Reset Demo Data",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/demo/reset"
+          }
+        },
+        {
+          "name": "Run Overdue Allocation Scan",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/jobs/overdue-allocations/run"
+          }
+        },
+        {
+          "name": "Run Booking Reminder Scan",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/jobs/booking-reminders/run"
+          }
+        },
+        {
+          "name": "Run Maintenance Due Scan",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/jobs/maintenance-due/run"
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Enhancements P1",
+      "item": [
+        {
+          "name": "Resolve QR Scan",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/qr/resolve?code={{qrCode}}",
+            "description": "QR scan mode: resolve scanned QR/asset code into asset detail."
+          }
+        },
+        {
+          "name": "Resolve Asset Tag Scan",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/by-tag/{{assetTag}}",
+            "description": "Fallback scan/search mode for typed or scanned asset tags."
+          }
+        },
+        {
+          "name": "Upload Bulk Asset Import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "mode",
+                  "value": "validate-and-import",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/imports/assets",
+            "description": "Bulk import assets from CSV/XLSX."
+          }
+        },
+        {
+          "name": "Download Bulk Import Template",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/imports/assets/template.xlsx"
+          }
+        },
+        {
+          "name": "Get Bulk Import Job",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/imports/{{importJobId}}"
+          }
+        },
+        {
+          "name": "List Bulk Import Errors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/imports/{{importJobId}}/errors"
+          }
+        },
+        {
+          "name": "Create Digital Handover",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/handovers",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assetId\": \"{{assetId}}\",\n  \"fromUserId\": \"{{userId}}\",\n  \"toUserId\": \"{{targetUserId}}\",\n  \"allocationId\": \"{{allocationId}}\",\n  \"notes\": \"Device handed over with charger and bag\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Digital Handover",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/handovers/{{handoverId}}"
+          }
+        },
+        {
+          "name": "Accept Digital Handover",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/handovers/{{handoverId}}/accept",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"acceptanceNotes\": \"Received in good condition\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject Digital Handover",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/handovers/{{handoverId}}/reject",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Condition mismatch\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Download Handover PDF",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/handovers/{{handoverId}}.pdf"
+          }
+        },
+        {
+          "name": "Upload Checkout Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "notes",
+                  "value": "Condition at checkout",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/allocations/{{allocationId}}/checkout-photos"
+          }
+        },
+        {
+          "name": "Upload Return Photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "notes",
+                  "value": "Condition at return",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/allocations/{{allocationId}}/return-photos"
+          }
+        },
+        {
+          "name": "List Allocation Photos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/allocations/{{allocationId}}/photos"
+          }
+        },
+        {
+          "name": "Admin Role Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboards/admin"
+          }
+        },
+        {
+          "name": "Asset Manager Role Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboards/asset-manager"
+          }
+        },
+        {
+          "name": "Department Head Role Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboards/department-head"
+          }
+        },
+        {
+          "name": "Employee Role Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/dashboards/employee"
+          }
+        },
+        {
+          "name": "Get Asset Health Score",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}/health-score"
+          }
+        },
+        {
+          "name": "List Asset Health Scores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/asset-health-scores?categoryId={{categoryId}}"
+          }
+        },
+        {
+          "name": "Get Retirement Recommendation",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/assets/{{assetId}}/retirement-recommendation"
+          }
+        },
+        {
+          "name": "List Retirement Recommendations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/retirement-recommendations"
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Stretch Goals P2",
+      "item": [
+        {
+          "name": "List Alert Rules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/alert-rules"
+          }
+        },
+        {
+          "name": "Create Alert Rule",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/alert-rules",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Critical maintenance escalation\",\n  \"eventType\": \"Maintenance Overdue\",\n  \"severity\": \"High\",\n  \"enabled\": true,\n  \"conditions\": {\n    \"priority\": \"Critical\",\n    \"olderThanHours\": 24\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Alert Rule",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/alert-rules/{{alertRuleId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Critical maintenance escalation\",\n  \"eventType\": \"Maintenance Overdue\",\n  \"severity\": \"High\",\n  \"enabled\": true,\n  \"conditions\": {\n    \"priority\": \"Critical\",\n    \"olderThanHours\": 12\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Disable Alert Rule",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/alert-rules/{{alertRuleId}}/status",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "List Advanced Alerts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/alerts?severity=High&unresolvedOnly=true"
+          }
+        },
+        {
+          "name": "Resolve Advanced Alert",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/alerts/{{alertId}}/resolve",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionNotes\": \"Handled by asset manager\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Saved Filters",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/saved-filters?module=assets"
+          }
+        },
+        {
+          "name": "Create Saved Filter",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/saved-filters",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"module\": \"assets\",\n  \"name\": \"Available Electronics in Bengaluru\",\n  \"filters\": {\n    \"status\": \"Available\",\n    \"categoryId\": \"{{categoryId}}\",\n    \"location\": \"Bengaluru\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Saved Filter",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/saved-filters/{{savedFilterId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"module\": \"assets\",\n  \"name\": \"Available Electronics in Bengaluru\",\n  \"filters\": {\n    \"status\": \"Available\",\n    \"categoryId\": \"{{categoryId}}\",\n    \"location\": \"Bengaluru\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Saved Filter",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/saved-filters/{{savedFilterId}}"
+          }
+        },
+        {
+          "name": "List Locations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/locations"
+          }
+        },
+        {
+          "name": "Create Location",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/locations",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bengaluru HQ\",\n  \"code\": \"BLR-HQ\",\n  \"address\": \"Bengaluru\",\n  \"status\": \"Active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Location",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/locations/{{locationId}}"
+          }
+        },
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/locations/{{locationId}}",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bengaluru HQ\",\n  \"code\": \"BLR-HQ\",\n  \"address\": \"Bengaluru\",\n  \"status\": \"Active\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Location Asset Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/locations/{{locationId}}/asset-summary"
+          }
+        },
+        {
+          "name": "Location Booking Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/locations/{{locationId}}/booking-summary"
+          }
+        }
+      ]
+    }
+  ]
+}
