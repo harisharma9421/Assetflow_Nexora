@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 
 /**
- * Root page — redirects authenticated users to dashboard,
- * unauthenticated users to login.
- * The actual auth check will be handled by middleware later.
+ * Root page — redirects to login.
+ * Once middleware-based auth guard is in place,
+ * authenticated users will be redirected to /dashboard automatically.
  */
 export default function RootPage() {
-  redirect("/dashboard");
+  redirect("/login");
 }

@@ -1,52 +1,120 @@
 /**
  * Authentication & User Types
+ * Mapped exactly to Spring Boot DTOs (dto/auth/*.java)
  */
-import type { UUID, ISODateString } from "./common.types";
 
-export type UserRole = "ADMIN" | "ASSET_MANAGER" | "DEPARTMENT_HEAD" | "EMPLOYEE";
+export type UserRole =
+  | "ADMIN"
+  | "ASSET_MANAGER"
+  | "DEPARTMENT_HEAD"
+  | "EMPLOYEE";
 
-export interface User {
-  id: UUID;
-  firstName: string;
-  lastName: string;
+/**
+ * Maps to AuthUserResponse.java
+ * { id(Long), fullName, email, departmentId, roleId, roleName, status }
+ */
+export interface AuthUserResponse {
+  id: number;
+  fullName: string;
   email: string;
-  role: UserRole;
-  departmentId: UUID | null;
-  departmentName: string | null;
-  organizationId: UUID;
-  organizationName: string;
-  isActive: boolean;
-  createdAt: ISODateString;
-  updatedAt: ISODateString;
+  departmentId: number | null;
+  roleId: number;
+  roleName: string;
+  status: "Active" | "Inactive";
 }
 
-export interface AuthTokens {
+/**
+ * Maps to AuthResponse.java
+ * { accessToken, tokenType, expiresInSeconds, user }
+ * Note: No refreshToken in current backend contract
+ */
+export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
-  tokenType: "Bearer";
-  expiresIn: number;
+  tokenType: string;
+  expiresInSeconds: number;
+  user: AuthUserResponse;
 }
 
+/**
+ * Maps to LoginRequest.java
+ * { email, password }
+ */
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
-export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
+/**
+ * Maps to SignupRequest.java
+ * { fullName, email, password, departmentId? }
+ * BUSINESS RULE: No role field — signup always creates EMPLOYEE
+ */
+export interface SignupRequest {
+  fullName: string;
   email: string;
   password: string;
-  organizationCode: string;
+  departmentId?: number | null;
 }
 
-export interface LoginResponse {
-  user: User;
-  tokens: AuthTokens;
+/**
+ * Maps to ForgotPasswordRequest.java
+ */
+export interface ForgotPasswordRequest {
+  email: string;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
+/**
+ * Maps to ForgotPasswordResponse.java
+ */
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+/**
+ * Maps to ResetPasswordRequest.java
+ * { token, newPassword }
+ */
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+// ─── Zod form schemas (keep types co-located for easy maintenance) ─────────
+
+export interface LoginFormValues {
+  email: string;
+  password: string;
+}
+
+export interface SignupFormValues {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  departmentId?: string;
+}
+
+export interface ForgotPasswordFormValues {
+  email: string;
+}
+
+export interface ResetPasswordFormValues {
   newPassword: string;
   confirmPassword: string;
 }
+
+// ─── App session user (normalized from AuthUserResponse) ─────────────────────
+
+export interface AppUser {
+  id: number;
+  fullName: string;
+  email: string;
+  departmentId: number | null;
+  roleId: number;
+  roleName: string;
+  status: "Active" | "Inactive";
+}
+
+// Keep old User alias for store compatibility
+export type User = AppUser;
+export type AuthTokens = Pick<AuthResponse, "accessToken" | "tokenType" | "expiresInSeconds">;

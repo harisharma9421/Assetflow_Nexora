@@ -1,20 +1,22 @@
 /**
  * Auth Store (Zustand)
- * Manages authenticated user state, tokens, and session lifecycle
+ * Manages authenticated user session, JWT token, and lifecycle
  */
+"use client";
+
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { User, AuthTokens } from "@/types/auth.types";
+import type { AppUser, AuthResponse } from "@/types/auth.types";
 import { STORAGE_KEYS } from "@/lib/constants";
 
 interface AuthState {
-  user: User | null;
-  tokens: AuthTokens | null;
+  user: AppUser | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
 
   // Actions
-  setAuth: (user: User, tokens: AuthTokens) => void;
-  updateUser: (user: Partial<User>) => void;
+  setAuthFromResponse: (response: AuthResponse) => void;
+  updateUser: (user: Partial<AppUser>) => void;
   logout: () => void;
 }
 
@@ -22,16 +24,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      tokens: null,
+      accessToken: null,
       isAuthenticated: false,
 
-      setAuth: (user, tokens) => {
-        // Persist tokens to localStorage for Axios interceptor
+      /**
+       * Called after a successful login.
+       * Persists the access token to localStorage so Axios interceptor picks it up.
+       */
+      setAuthFromResponse: (response: AuthResponse) => {
         if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
         }
-        set({ user, tokens, isAuthenticated: true });
+        set({
+          user: response.user,
+          accessToken: response.accessToken,
+          isAuthenticated: true,
+        });
       },
 
       updateUser: (partialUser) =>
@@ -42,9 +50,8 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         if (typeof window !== "undefined") {
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-          localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         }
-        set({ user: null, tokens: null, isAuthenticated: false });
+        set({ user: null, accessToken: null, isAuthenticated: false });
       },
     }),
     {
@@ -52,7 +59,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        tokens: state.tokens,
+        accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }
