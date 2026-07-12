@@ -19,6 +19,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String ADMIN = "ADMIN";
+    private static final String ASSET_MANAGER = "ASSET_MANAGER";
+    private static final String DEPARTMENT_HEAD = "DEPARTMENT_HEAD";
+    private static final String EMPLOYEE = "EMPLOYEE";
+
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/health",
             "/api/version",
@@ -47,6 +52,30 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/departments/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/api/departments/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PATCH, "/api/departments/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/asset-categories/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/api/asset-categories/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.PATCH, "/api/asset-categories/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, "/api/category-fields/**").hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/assets/**").hasAnyRole(ADMIN, ASSET_MANAGER)
+                        .requestMatchers(HttpMethod.PUT, "/api/assets/**").hasAnyRole(ADMIN, ASSET_MANAGER)
+                        .requestMatchers(HttpMethod.PATCH, "/api/assets/**").hasAnyRole(ADMIN, ASSET_MANAGER)
+                        .requestMatchers("/api/allocations/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD)
+                        .requestMatchers("/api/transfers/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE)
+                        .requestMatchers("/api/bookings/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE)
+                        .requestMatchers("/api/resources/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE)
+                        .requestMatchers("/api/maintenance-requests/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE)
+                        .requestMatchers("/api/audit-cycles/**").hasAnyRole(ADMIN, ASSET_MANAGER)
+                        .requestMatchers("/api/audit-cycle-assets/**").hasAnyRole(ADMIN, ASSET_MANAGER, EMPLOYEE)
+                        .requestMatchers("/api/discrepancy-reports/**").hasAnyRole(ADMIN, ASSET_MANAGER)
+                        .requestMatchers("/api/dashboard/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE)
+                        .requestMatchers("/api/reports/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD)
+                        .requestMatchers("/api/exports/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD)
+                        .requestMatchers("/api/notifications/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD, EMPLOYEE)
+                        .requestMatchers("/api/activity-logs/**").hasAnyRole(ADMIN, ASSET_MANAGER, DEPARTMENT_HEAD)
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
