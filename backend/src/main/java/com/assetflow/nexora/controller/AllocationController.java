@@ -38,4 +38,9 @@ public class AllocationController {
             @Valid @RequestBody AssetReturnRequest request) {
         return allocations.returnAsset(allocationId, request);
     }
+
+    @GetMapping("/overdue")
+    public List<AssetAllocationResponse> getOverdueAllocations() {
+        return allocations.listOverdue();
+    }
 }

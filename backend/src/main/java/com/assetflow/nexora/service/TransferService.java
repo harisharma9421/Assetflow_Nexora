@@ -98,8 +98,8 @@ public class TransferService {
                 .orElseThrow(() -> missing("User", request.approvedBy()));
 
         // Get current allocation
-        AssetAllocation currentAllocation = allocations.findById(transfer.currentAllocationId())
-                .orElseThrow(() -> missing("Asset allocation", transfer.currentAllocationId()));
+        AssetAllocation currentAllocation = allocations.findById(transfer.currentAllocationId)
+                .orElseThrow(() -> missing("Asset allocation", transfer.currentAllocationId));
 
         // Return current allocation
         currentAllocation.status = "Returned";

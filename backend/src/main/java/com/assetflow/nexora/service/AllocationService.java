@@ -112,6 +112,13 @@ public class AllocationService {
         return response(allocations.findById(allocationId).orElseThrow(() -> missing("Asset allocation", allocationId)));
     }
 
+    @Transactional(readOnly = true)
+    public List<AssetAllocationResponse> listOverdue() {
+        return allocations.findByStatusAndExpectedReturnDateBefore(ACTIVE, LocalDate.now()).stream()
+                .map(this::response)
+                .toList();
+    }
+
     private void validateHolder(String holderType, Long employeeId, Long departmentId) {
         String normalized = normalizeHolderType(holderType);
         if (!HOLDER_TYPES.contains(normalized))
