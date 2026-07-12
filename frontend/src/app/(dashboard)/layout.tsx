@@ -19,12 +19,12 @@ export default function DashboardLayout({
       {/* Main content right panel */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Topbar header bar */}
-        <header className="flex h-16 w-full items-center border-b border-[hsl(var(--color-border))] shrink-0 bg-white">
+        <header className="flex h-16 w-full items-center border-b border-border shrink-0 bg-card">
           <AppTopbar />
         </header>
 
         {/* Page content window */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-background">
           {children}
         </main>
       </div>

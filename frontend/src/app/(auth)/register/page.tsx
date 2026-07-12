@@ -13,16 +13,6 @@ export default function RegisterPage() {
     <AuthPageWrapper variant="signup">
       {/* Header */}
       <div className="mb-7">
-        {/* Mobile logo */}
-        <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(var(--color-primary))]">
-            <span className="text-sm font-bold text-white">A</span>
-          </div>
-          <span className="text-base font-bold text-[hsl(var(--color-foreground))]">
-            Nexora
-          </span>
-        </div>
-
         <h1 className="text-2xl font-bold text-[hsl(var(--color-foreground))]">
           Create your account
         </h1>

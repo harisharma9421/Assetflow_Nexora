@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
+import { Zap, ShieldCheck, Database, Calendar } from "lucide-react";
 
 interface AuthIllustrationProps {
   variant?: "login" | "signup" | "forgot";
@@ -18,175 +18,115 @@ export default function AuthIllustration({ variant = "login" }: AuthIllustration
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="relative flex h-full flex-col justify-between bg-slate-50 p-12 overflow-hidden dark:bg-slate-950">
-      {/* Decorative Blur Background blobs */}
-      <div className="absolute -left-12 -top-12 h-96 w-96 rounded-full bg-indigo-200/40 blur-3xl dark:bg-indigo-950/20" />
-      <div className="absolute -bottom-24 right-0 h-96 w-96 rounded-full bg-violet-200/40 blur-3xl dark:bg-violet-950/20" />
+    <div className="relative flex h-full flex-col justify-between bg-slate-950 p-12 overflow-hidden text-white">
+      {/* Decorative Blur Background blobs (SaaS style) */}
+      <div className="absolute -left-12 -top-12 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
+      <div className="absolute -bottom-24 right-0 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl" />
+      
+      {/* Structural Dot Grid Pattern */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]" 
+        style={{
+          backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+          backgroundSize: "20px 20px"
+        }}
+      />
 
       {/* Brand Header */}
       <div className="relative z-10 flex items-center gap-2.5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[hsl(var(--color-primary))] text-white shadow-md shadow-indigo-600/20">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
           <Zap className="h-5.5 w-5.5 fill-current text-white" />
         </div>
         <div>
-          <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <span className="text-xl font-bold tracking-tight text-white">
             Nexora
           </span>
-          <span className="ml-1.5 inline-flex items-center rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-[hsl(var(--color-primary))] dark:bg-indigo-950/30">
+          <span className="ml-1.5 inline-flex items-center rounded-full bg-indigo-950/50 border border-indigo-900/50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-400">
             ERP
           </span>
         </div>
       </div>
 
-      {/* Center Vector Scene Illustration */}
+      {/* Center Abstract Dashboard/Asset Graphics (Linear/Stripe style) */}
       <div className="relative z-10 my-auto flex flex-col items-center justify-center">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="relative flex h-64 w-full max-w-sm items-center justify-center rounded-[20px] bg-white/60 p-6 shadow-xl shadow-slate-100/40 backdrop-blur-md dark:bg-slate-900/40 dark:shadow-none"
+          className="relative w-full max-w-sm flex flex-col gap-4"
         >
-          {/* Custom Modern Vector Scene Representation using SVGs */}
-          <svg
-            className="h-full w-full"
-            viewBox="0 0 300 200"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Soft grid background */}
-            <circle cx="150" cy="100" r="80" fill="#EEF2F6" className="dark:fill-slate-800/30" />
-            <path
-              d="M100 100H200M150 50V150"
-              stroke="#E2E8F0"
-              strokeWidth="1.5"
-              strokeDasharray="4 4"
-              className="dark:stroke-slate-800"
-            />
+          {/* Card 1: Asset Details Widget */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4.5 shadow-2xl backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-400">
+                  <Database className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Dell Latitude 5420</h4>
+                  <p className="text-[10px] text-slate-400">Tag: NX-4480 · HW-109</p>
+                </div>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-green-950/50 border border-green-900/50 px-2 py-0.5 text-[10px] font-bold text-green-400">
+                Active
+              </span>
+            </div>
+            <div className="mt-4 border-t border-white/5 pt-3.5 flex items-center justify-between text-xs text-slate-400">
+              <span>Holder: Sarah Jenkins</span>
+              <span>Due: July 20, 2026</span>
+            </div>
+          </div>
 
-            {/* Character Base */}
-            <g id="character">
-              {/* Body & Shirt */}
-              <path
-                d="M150 145 C135 145 125 155 125 170 H175 C175 155 165 145 150 145 Z"
-                fill="#3B82F6"
-              />
-              {/* Head */}
-              <circle cx="150" cy="120" r="14" fill="#FBCFE8" />
-              {/* Hair */}
-              <path
-                d="M136 120 C136 108 144 104 150 104 C156 104 164 108 164 120 C164 116 160 110 150 110 C140 110 136 116 136 120 Z"
-                fill="#1E293B"
-              />
-              {/* Arms */}
-              <path
-                d="M125 150 Q110 140 98 132"
-                stroke="#3B82F6"
-                strokeWidth="8"
-                strokeLinecap="round"
-              />
-              <path
-                d="M175 150 Q190 140 202 132"
-                stroke="#3B82F6"
-                strokeWidth="8"
-                strokeLinecap="round"
-              />
-            </g>
+          {/* Card 2: Calendar Reservation Conflict Check Widget */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4.5 shadow-2xl backdrop-blur-md ml-6 mr-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
+                  <Calendar className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Conference Room A</h4>
+                  <p className="text-[10px] text-slate-400">14:00 - 16:00 · Booking Req</p>
+                </div>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-indigo-950/50 border border-indigo-900/50 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
+                Verified
+              </span>
+            </div>
+          </div>
 
-            {/* Shield Check Illustration */}
-            <g id="shield" className="animate-bounce" style={{ animationDuration: "3s" }}>
-              <path
-                d="M210 105 C210 85 228 80 228 80 C228 80 246 85 246 105 C246 128 228 140 228 140 C228 140 210 128 210 105 Z"
-                fill="#10B981"
-              />
-              <path
-                d="M220 110 L225 115 L236 102"
-                stroke="white"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </g>
-
-            {/* Floating UI panel representation */}
-            <g id="ui-panel" className="animate-pulse">
-              <rect
-                x="45"
-                y="55"
-                width="75"
-                height="55"
-                rx="8"
-                fill="white"
-                stroke="#E2E8F0"
-                strokeWidth="1.5"
-                className="dark:fill-slate-900 dark:stroke-slate-800"
-              />
-              <circle cx="58" cy="67" r="5" fill="#F87171" />
-              <rect
-                x="70"
-                y="63"
-                width="38"
-                height="3.5"
-                rx="1.5"
-                fill="#94A3B8"
-                className="dark:fill-slate-700"
-              />
-              <rect
-                x="55"
-                y="78"
-                width="55"
-                height="2.5"
-                rx="1.2"
-                fill="#CBD5E1"
-                className="dark:fill-slate-700"
-              />
-              <rect
-                x="55"
-                y="85"
-                width="40"
-                height="2.5"
-                rx="1.2"
-                fill="#CBD5E1"
-                className="dark:fill-slate-700"
-              />
-              <rect
-                x="55"
-                y="92"
-                width="50"
-                height="2.5"
-                rx="1.2"
-                fill="#3B82F6"
-              />
-            </g>
-
-            {/* Small floating assets icon representation */}
-            <g id="floater" className="animate-bounce" style={{ animationDuration: "4s" }}>
-              <circle cx="75" cy="140" r="16" fill="#F59E0B" fillOpacity="0.2" />
-              <path
-                d="M75 132 L82 136 L75 140 L68 136 Z M68 138 L75 142 L82 138 M68 141 L75 145 L82 141"
-                stroke="#D97706"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </g>
-          </svg>
+          {/* Card 3: Compliance Stock Count Widget */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4.5 shadow-2xl backdrop-blur-md mr-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500/20 text-green-400">
+                  <ShieldCheck className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Audit Verification</h4>
+                  <p className="text-[10px] text-slate-400">Discrepancy Status: 0 Mismatch</p>
+                </div>
+              </div>
+              <span className="inline-flex h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+            </div>
+          </div>
         </motion.div>
 
         {/* Text descriptions */}
-        <div className="mt-8 text-center">
-          <h2 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">
+        <div className="mt-12 text-center">
+          <h2 className="text-lg font-bold tracking-tight text-white">
             {titles[variant]}
           </h2>
-          <p className="mt-2 text-sm text-slate-500 max-w-xs mx-auto">
-            Replacing outdated registry registers with a singular, workflow-driven enterprise platform.
+          <p className="mt-2 text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">
+            Centralized control system for physical inventories, workspace allocations, and compliance logs.
           </p>
         </div>
       </div>
 
       {/* Footer text */}
-      <div className="relative z-10 flex items-center justify-between text-xs font-semibold text-slate-400">
+      <div className="relative z-10 flex items-center justify-between text-[11px] font-semibold text-slate-500">
         <span>© {currentYear} Nexora Corp</span>
-        <span>Enterprise Analytics v1.0</span>
+        <span>Enterprise Operations Console</span>
       </div>
     </div>
   );
