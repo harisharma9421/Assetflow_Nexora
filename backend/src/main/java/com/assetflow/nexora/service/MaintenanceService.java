@@ -16,6 +16,8 @@ import com.assetflow.nexora.repository.UserRepository;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,15 +30,20 @@ public class MaintenanceService {
     private final AssetRepository assets;
     private final UserRepository users;
     private final MaintenanceFileStorageService fileStorage;
+    private final ActivityLogService activityLogService;
+    private final JdbcTemplate jdbc;
 
     public MaintenanceService(MaintenanceRequestRepository maintenanceRequests,
             MaintenanceAttachmentRepository attachments, AssetRepository assets, UserRepository users,
-            MaintenanceFileStorageService fileStorage) {
+            MaintenanceFileStorageService fileStorage, ActivityLogService activityLogService,
+            JdbcTemplate jdbc) {
         this.maintenanceRequests = maintenanceRequests;
         this.attachments = attachments;
         this.assets = assets;
         this.users = users;
         this.fileStorage = fileStorage;
+        this.activityLogService = activityLogService;
+        this.jdbc = jdbc;
     }
 
     public MaintenanceRequestResponse createMaintenanceRequest(MaintenanceRequestCreateRequest request,
@@ -165,6 +172,15 @@ public class MaintenanceService {
         assets.save(asset);
 
         MaintenanceRequest saved = maintenanceRequests.save(request);
+
+        // Create activity log
+        activityLogService.log("MAINTENANCE_APPROVED", "maintenance", saved.id, approvedBy,
+                Map.of("assetId", saved.assetId, "priority", saved.priority, "raisedBy", saved.raisedBy));
+
+        // Create notification for requester
+        createNotification(saved.raisedBy, "Maintenance Approved",
+                "Your maintenance request has been approved", "maintenance", saved.id);
+
         return toResponse(saved);
     }
 
@@ -188,6 +204,17 @@ public class MaintenanceService {
         request.rejectionReason = rejectionReason;
 
         MaintenanceRequest saved = maintenanceRequests.save(request);
+
+        // Create activity log
+        activityLogService.log("MAINTENANCE_REJECTED", "maintenance", saved.id, rejectedBy, Map.of("assetId",
+                saved.assetId, "reason", rejectionReason != null ? rejectionReason : "", "raisedBy",
+                saved.raisedBy));
+
+        // Create notification for requester
+        createNotification(saved.raisedBy, "Maintenance Rejected",
+                "Your maintenance request has been rejected: " + (rejectionReason != null ? rejectionReason : ""),
+                "maintenance", saved.id);
+
         return toResponse(saved);
     }
 
@@ -206,6 +233,11 @@ public class MaintenanceService {
         request.status = "Technician Assigned";
 
         MaintenanceRequest saved = maintenanceRequests.save(request);
+
+        // Create activity log
+        activityLogService.log("TECHNICIAN_ASSIGNED", "maintenance", saved.id, request.raisedBy,
+                Map.of("assetId", saved.assetId, "technicianName", technicianName));
+
         return toResponse(saved);
     }
 
@@ -246,6 +278,24 @@ public class MaintenanceService {
         assets.save(asset);
 
         MaintenanceRequest saved = maintenanceRequests.save(request);
+
+        // Create activity log
+        activityLogService.log("MAINTENANCE_RESOLVED", "maintenance", saved.id, request.raisedBy,
+                Map.of("assetId", saved.assetId, "technicianName",
+                        saved.technicianName != null ? saved.technicianName : "", "resolutionNotes",
+                        resolutionNotes != null ? resolutionNotes : ""));
+
+        // Create notification for requester
+        createNotification(saved.raisedBy, "Maintenance Resolved",
+                "Your maintenance request has been resolved", "maintenance", saved.id);
+
         return toResponse(saved);
+    }
+
+    private void createNotification(Long userId, String title, String message, String relatedEntityType,
+            Long relatedEntityId) {
+        jdbc.update(
+                "INSERT INTO notifications (user_id, type, title, message, related_entity_type, related_entity_id) VALUES (?, CAST(? AS notification_type), ?, ?, ?, ?)",
+                userId, "Maintenance Update", title, message, relatedEntityType, relatedEntityId);
     }
 }
