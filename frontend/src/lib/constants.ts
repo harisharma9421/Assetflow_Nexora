@@ -1,5 +1,5 @@
 /**
- * Application-wide constants for Assetra ERP
+ * Application-wide constants for Nexora ERP
  */
 
 // ─── Routes ────────────────────────────────────────────────────────────────
@@ -143,13 +143,14 @@ export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 // ─── Local Storage Keys ──────────────────────────────────────────────────────
 
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: "assetra_access_token",
-  REFRESH_TOKEN: "assetra_refresh_token",
-  USER: "assetra_user",
-  THEME: "assetra_theme",
+  ACCESS_TOKEN: "Nexora_access_token",
+  REFRESH_TOKEN: "Nexora_refresh_token",
+  USER: "Nexora_user",
+  THEME: "Nexora_theme",
 } as const;
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080/api";
+

@@ -4,8 +4,8 @@ import AuthPageWrapper from "@/features/auth/components/AuthPageWrapper";
 import ResetPasswordForm from "@/features/auth/components/ResetPasswordForm";
 
 export const metadata: Metadata = {
-  title: "Reset Password | Assetra",
-  description: "Set a new password for your Assetra account.",
+  title: "Reset Password | Nexora",
+  description: "Set a new password for your Nexora account.",
 };
 
 export default function ResetPasswordPage() {
@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
             <span className="text-sm font-bold text-white">A</span>
           </div>
           <span className="text-base font-bold text-[hsl(var(--color-foreground))]">
-            Assetra
+            Nexora
           </span>
         </div>
 
@@ -38,3 +38,4 @@ export default function ResetPasswordPage() {
     </AuthPageWrapper>
   );
 }
+

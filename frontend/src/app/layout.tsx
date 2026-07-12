@@ -11,11 +11,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Assetra – Enterprise Asset & Resource Management",
-    template: "%s | Assetra",
+    default: "Nexora – Enterprise Asset & Resource Management",
+    template: "%s | Nexora",
   },
   description:
-    "Assetra is an intelligent ERP platform for managing physical assets, shared resources, maintenance workflows, and organizational audits — all in one place.",
+    "Nexora is an intelligent ERP platform for managing physical assets, shared resources, maintenance workflows, and organizational audits — all in one place.",
   keywords: [
     "asset management",
     "ERP",
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     "audit",
     "enterprise",
   ],
-  authors: [{ name: "Assetra" }],
-  creator: "Assetra",
+  authors: [{ name: "Nexora" }],
+  creator: "Nexora",
 };
 
 export const viewport: Viewport = {
@@ -60,3 +60,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -3,9 +3,9 @@ import AuthPageWrapper from "@/features/auth/components/AuthPageWrapper";
 import LoginForm from "@/features/auth/components/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Sign In | Assetra",
+  title: "Sign In | Nexora",
   description:
-    "Sign in to Assetra to manage assets, track allocations, and access your organization's ERP dashboard.",
+    "Sign in to Nexora to manage assets, track allocations, and access your organization's ERP dashboard.",
 };
 
 export default function LoginPage() {
@@ -19,7 +19,7 @@ export default function LoginPage() {
             <span className="text-sm font-bold text-white">A</span>
           </div>
           <span className="text-base font-bold text-[hsl(var(--color-foreground))]">
-            Assetra
+            Nexora
           </span>
         </div>
 
@@ -36,3 +36,4 @@ export default function LoginPage() {
     </AuthPageWrapper>
   );
 }
+

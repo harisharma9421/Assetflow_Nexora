@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Organization Settings | Assetra" };
+export const metadata: Metadata = { title: "Organization Settings | Nexora" };
 
 export default function OrganizationSettingsPage() {
   return (
@@ -14,3 +14,4 @@ export default function OrganizationSettingsPage() {
     </div>
   );
 }
+
