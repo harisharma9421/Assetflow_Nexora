@@ -1,32 +1,42 @@
 package com.assetflow.nexora.service;
 
+import com.assetflow.nexora.dto.MaintenanceAttachmentDto;
 import com.assetflow.nexora.dto.MaintenanceRequestCreateRequest;
 import com.assetflow.nexora.dto.MaintenanceRequestResponse;
 import com.assetflow.nexora.entity.Asset;
+import com.assetflow.nexora.entity.MaintenanceAttachment;
 import com.assetflow.nexora.entity.MaintenanceRequest;
 import com.assetflow.nexora.entity.User;
 import com.assetflow.nexora.exception.BadRequestException;
 import com.assetflow.nexora.exception.ResourceNotFoundException;
 import com.assetflow.nexora.repository.AssetRepository;
+import com.assetflow.nexora.repository.MaintenanceAttachmentRepository;
 import com.assetflow.nexora.repository.MaintenanceRequestRepository;
 import com.assetflow.nexora.repository.UserRepository;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
 public class MaintenanceService {
     private final MaintenanceRequestRepository maintenanceRequests;
+    private final MaintenanceAttachmentRepository attachments;
     private final AssetRepository assets;
     private final UserRepository users;
+    private final MaintenanceFileStorageService fileStorage;
 
-    public MaintenanceService(MaintenanceRequestRepository maintenanceRequests, AssetRepository assets,
-            UserRepository users) {
+    public MaintenanceService(MaintenanceRequestRepository maintenanceRequests,
+            MaintenanceAttachmentRepository attachments, AssetRepository assets, UserRepository users,
+            MaintenanceFileStorageService fileStorage) {
         this.maintenanceRequests = maintenanceRequests;
+        this.attachments = attachments;
         this.assets = assets;
         this.users = users;
+        this.fileStorage = fileStorage;
     }
 
     public MaintenanceRequestResponse createMaintenanceRequest(MaintenanceRequestCreateRequest request,
@@ -94,5 +104,39 @@ public class MaintenanceService {
         return new MaintenanceRequestResponse(m.id, m.assetId, m.raisedBy, m.issueDescription, m.priority,
                 m.status, m.approvedBy, m.approvedAt, m.rejectionReason, m.technicianName,
                 m.technicianAssignedAt, m.resolvedAt, m.resolutionNotes, m.createdAt, m.updatedAt);
+    }
+
+    public MaintenanceAttachmentDto uploadAttachment(Long requestId, MultipartFile file, Long uploadedBy) {
+        // Validate maintenance request exists
+        MaintenanceRequest request = findMaintenanceRequest(requestId);
+
+        // Validate user exists
+        users.findById(uploadedBy).orElseThrow(
+                () -> new ResourceNotFoundException("User with id " + uploadedBy + " was not found"));
+
+        // Store file
+        String fileUrl = fileStorage.store(requestId, file);
+
+        // Save attachment record
+        MaintenanceAttachment attachment = new MaintenanceAttachment();
+        attachment.requestId = requestId;
+        attachment.fileUrl = fileUrl;
+        attachment.uploadedBy = uploadedBy;
+        attachment.uploadedAt = OffsetDateTime.now(ZoneOffset.UTC);
+
+        MaintenanceAttachment saved = attachments.save(attachment);
+        return new MaintenanceAttachmentDto(saved.id, saved.requestId, saved.fileUrl, saved.uploadedBy,
+                saved.uploadedAt);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MaintenanceAttachmentDto> listAttachments(Long requestId) {
+        // Validate maintenance request exists
+        findMaintenanceRequest(requestId);
+
+        return attachments.findByRequestId(requestId).stream()
+                .map(a -> new MaintenanceAttachmentDto(a.id, a.requestId, a.fileUrl, a.uploadedBy,
+                        a.uploadedAt))
+                .toList();
     }
 }

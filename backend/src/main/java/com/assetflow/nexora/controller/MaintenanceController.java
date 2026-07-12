@@ -1,5 +1,6 @@
 package com.assetflow.nexora.controller;
 
+import com.assetflow.nexora.dto.MaintenanceAttachmentDto;
 import com.assetflow.nexora.dto.MaintenanceRequestCreateRequest;
 import com.assetflow.nexora.dto.MaintenanceRequestResponse;
 import com.assetflow.nexora.service.MaintenanceService;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/maintenance-requests")
@@ -53,6 +55,25 @@ public class MaintenanceController {
     public ResponseEntity<MaintenanceRequestResponse> getMaintenanceRequest(
             @PathVariable Long requestId) {
         MaintenanceRequestResponse response = maintenanceService.getMaintenanceRequest(requestId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{requestId}/attachments")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Upload maintenance attachment", description = "Upload a photo or document for a maintenance request")
+    public ResponseEntity<MaintenanceAttachmentDto> uploadAttachment(@PathVariable Long requestId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        MaintenanceAttachmentDto response = maintenanceService.uploadAttachment(requestId, file, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/{requestId}/attachments")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "List maintenance attachments", description = "List all attachments for a maintenance request")
+    public ResponseEntity<List<MaintenanceAttachmentDto>> listAttachments(@PathVariable Long requestId) {
+        List<MaintenanceAttachmentDto> response = maintenanceService.listAttachments(requestId);
         return ResponseEntity.ok(response);
     }
 }
