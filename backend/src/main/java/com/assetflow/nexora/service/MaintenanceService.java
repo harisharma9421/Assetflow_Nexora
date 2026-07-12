@@ -190,4 +190,62 @@ public class MaintenanceService {
         MaintenanceRequest saved = maintenanceRequests.save(request);
         return toResponse(saved);
     }
+
+    public MaintenanceRequestResponse assignTechnician(Long requestId, String technicianName) {
+        MaintenanceRequest request = findMaintenanceRequest(requestId);
+
+        // Validate request is in Approved status
+        if (!"Approved".equals(request.status)) {
+            throw new BadRequestException(
+                    "Only approved maintenance requests can have technicians assigned");
+        }
+
+        // Assign technician and update status
+        request.technicianName = technicianName;
+        request.technicianAssignedAt = OffsetDateTime.now(ZoneOffset.UTC);
+        request.status = "Technician Assigned";
+
+        MaintenanceRequest saved = maintenanceRequests.save(request);
+        return toResponse(saved);
+    }
+
+    public MaintenanceRequestResponse startMaintenance(Long requestId) {
+        MaintenanceRequest request = findMaintenanceRequest(requestId);
+
+        // Validate request is in Technician Assigned status
+        if (!"Technician Assigned".equals(request.status)) {
+            throw new BadRequestException(
+                    "Only maintenance with assigned technician can be started");
+        }
+
+        // Update status to In Progress
+        request.status = "In Progress";
+
+        MaintenanceRequest saved = maintenanceRequests.save(request);
+        return toResponse(saved);
+    }
+
+    public MaintenanceRequestResponse resolveMaintenance(Long requestId, String resolutionNotes) {
+        MaintenanceRequest request = findMaintenanceRequest(requestId);
+
+        // Validate request is in In Progress status
+        if (!"In Progress".equals(request.status)) {
+            throw new BadRequestException("Only in-progress maintenance can be resolved");
+        }
+
+        // Resolve the maintenance
+        request.status = "Resolved";
+        request.resolvedAt = OffsetDateTime.now(ZoneOffset.UTC);
+        request.resolutionNotes = resolutionNotes;
+
+        // Return asset to Available status
+        Asset asset = assets.findById(request.assetId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Asset with id " + request.assetId + " was not found"));
+        asset.status = "Available";
+        assets.save(asset);
+
+        MaintenanceRequest saved = maintenanceRequests.save(request);
+        return toResponse(saved);
+    }
 }

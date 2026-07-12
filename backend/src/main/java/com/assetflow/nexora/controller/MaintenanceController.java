@@ -5,6 +5,8 @@ import com.assetflow.nexora.dto.MaintenanceApproveRequest;
 import com.assetflow.nexora.dto.MaintenanceRejectRequest;
 import com.assetflow.nexora.dto.MaintenanceRequestCreateRequest;
 import com.assetflow.nexora.dto.MaintenanceRequestResponse;
+import com.assetflow.nexora.dto.MaintenanceResolveRequest;
+import com.assetflow.nexora.dto.MaintenanceTechnicianAssignRequest;
 import com.assetflow.nexora.service.MaintenanceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -99,6 +101,34 @@ public class MaintenanceController {
         Long userId = Long.parseLong(userDetails.getUsername());
         MaintenanceRequestResponse response = maintenanceService.rejectMaintenance(requestId,
                 request.rejectionReason(), userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{requestId}/assign-technician")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Assign technician to maintenance", description = "Assign a technician to an approved maintenance request")
+    public ResponseEntity<MaintenanceRequestResponse> assignTechnician(@PathVariable Long requestId,
+            @Valid @RequestBody MaintenanceTechnicianAssignRequest request) {
+        MaintenanceRequestResponse response = maintenanceService.assignTechnician(requestId,
+                request.technicianName());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{requestId}/start")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Start maintenance work", description = "Mark maintenance as In Progress")
+    public ResponseEntity<MaintenanceRequestResponse> startMaintenance(@PathVariable Long requestId) {
+        MaintenanceRequestResponse response = maintenanceService.startMaintenance(requestId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{requestId}/resolve")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Resolve maintenance", description = "Mark maintenance as Resolved and return asset to Available")
+    public ResponseEntity<MaintenanceRequestResponse> resolveMaintenance(@PathVariable Long requestId,
+            @Valid @RequestBody MaintenanceResolveRequest request) {
+        MaintenanceRequestResponse response = maintenanceService.resolveMaintenance(requestId,
+                request.resolutionNotes());
         return ResponseEntity.ok(response);
     }
 }
