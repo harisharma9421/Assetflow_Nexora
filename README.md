@@ -4,82 +4,28 @@ Enterprise Asset & Resource Management System for tracking assets, allocations, 
 
 ## Architecture
 
-```mermaid
-flowchart TB
-    subgraph Users["Users"]
-        Admin["Admin"]
-        AssetManager["Asset Manager"]
-        DeptHead["Department Head"]
-        Employee["Employee"]
-    end
+The following diagram illustrates the end-to-end architecture of the AssetFlow Nexora platform, showing the interaction between users, the web application, backend services, and the data layer.
 
-    subgraph Frontend["Frontend - Next.js 15 + TypeScript"]
-        Pages["App Screens\nDashboard, Assets, Allocation, Booking,\nMaintenance, Audit, Reports, Notifications"]
-        UI["UI Layer\nshadcn/ui, Tailwind CSS, Lucide React"]
-        Forms["Forms + Validation\nReact Hook Form + Zod"]
-        UIState["Zustand\nlocal UI/session state"]
-        APIState["TanStack Query\nserver state, caching, mutations"]
-    end
+![Nexora Architecture Diagram](docs/images/Nexora_Architecture.png)
 
-    subgraph Backend["Backend - Java 21 + Spring Boot 3.5"]
-        Auth["Authentication + Authorization\nSpring Security + JWT"]
-        Controllers["REST Controllers\nDTO request/response APIs"]
-        Services["Service Layer\nbusiness rules and workflows"]
-        Jobs["Scheduled Jobs\noverdue returns, reminders, maintenance checks"]
-        Repos["Spring Data JPA Repositories\nHibernate ORM"]
-    end
+### System Overview
 
-    subgraph Domain["Core AssetFlow Modules"]
-        Org["Organization Setup\ndepartments, categories, employee directory"]
-        AssetReg["Asset Registry\nasset tags, lifecycle status, QR codes"]
-        Allocation["Asset Allocation + Transfer\nconflict blocking, returns, history"]
-        Booking["Resource Booking\ntime-slot overlap validation"]
-        Maintenance["Maintenance Management\napproval workflow and repair status"]
-        Audit["Asset Audit\ncycles, auditors, discrepancy reports"]
-        Reports["Reports + Analytics\nKPIs, trends, exports"]
-        Notifications["Activity Logs + Notifications"]
-    end
+AssetFlow Nexora is designed as a modular, layered enterprise application that separates user interaction, business logic, data access, and reporting concerns. The frontend provides a responsive interface for administrators, asset managers, department heads, and employees, while the backend exposes secure APIs for managing assets, bookings, maintenance workflows, audits, and reports.
 
-    subgraph Data["Persistence + Files"]
-        DB[("PostgreSQL\nmanaged through pgAdmin 4")]
-        Flyway["Flyway\nschema migrations"]
-        Files["Local File Storage\nasset photos, documents, attachments"]
-    end
+### Frontend Layer
 
-    subgraph Exports["Exports + Developer Tools"]
-        PDF["PDF Reports\nThymeleaf -> HTML -> OpenHTMLToPDF"]
-        Excel["Excel Export\nApache POI"]
-        QR["QR Code\nZXing"]
-        Swagger["API Docs\nspringdoc-openapi / Swagger UI"]
-        Postman["API Testing\nPostman"]
-    end
+The frontend is built using modern web technologies and offers a streamlined experience for day-to-day operations. It includes dashboards, asset management screens, booking workflows, maintenance tracking, and reporting views. The user interface is supported by state management and form handling libraries that improve usability, validation, and responsiveness.
 
-    Admin --> Pages
-    AssetManager --> Pages
-    DeptHead --> Pages
-    Employee --> Pages
+### Application Layer
 
-    Pages --> UI
-    Pages --> Forms
-    Pages --> UIState
-    Pages --> APIState
-    APIState -->|"JWT secured REST APIs"| Auth
+The backend layer is implemented with Java and Spring Boot and serves as the core processing engine of the system. It handles authentication and authorization, coordinates business workflows, enforces domain rules, and manages scheduled jobs for recurring tasks such as reminders, overdue returns, and maintenance checks. This layer ensures that business logic remains centralized and consistent across all modules.
 
-    Auth --> Controllers
-    Controllers --> Services
-    Services --> Domain
-    Services --> Repos
-    Jobs --> Services
+### Data and Storage Layer
 
-    Repos --> DB
-    Flyway --> DB
-    Services --> Files
+The application relies on a relational database for persistent storage of organizational, asset, allocation, booking, audit, and reporting data. Database migrations are managed through Flyway to maintain a reliable and version-controlled schema evolution process. File storage is also integrated to support document uploads, attachments, and related asset records.
 
-    AssetReg --> QR
-    Reports --> PDF
-    Reports --> Excel
-    Controllers --> Swagger
-    Postman --> Controllers
-```
+### Reporting and Integration Capabilities
+
+The platform includes reporting and export features to support operational oversight and decision-making. It can generate reports in PDF and Excel formats, supports QR code-based asset identification, and provides API documentation for maintainability and integration. These capabilities strengthen the platform’s usability in real-world enterprise environments.
 
 Full architecture details: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
