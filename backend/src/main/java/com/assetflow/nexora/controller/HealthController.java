@@ -21,17 +21,13 @@ public class HealthController {
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
-        return ResponseEntity.ok(Map.of(
-                "status", "UP",
-                "application", applicationName,
-                "timestamp", OffsetDateTime.now(ZoneOffset.UTC)));
+        return ResponseEntity.ok(Map.of("status", "UP", "application", applicationName, "timestamp",
+                OffsetDateTime.now(ZoneOffset.UTC)));
     }
 
     @GetMapping("/version")
     public ResponseEntity<Map<String, Object>> version() {
-        return ResponseEntity.ok(Map.of(
-                "application", applicationName,
-                "version", "0.0.1-SNAPSHOT",
-                "java", Runtime.version().feature()));
+        return ResponseEntity.ok(Map.of("application", applicationName, "version", "0.0.1-SNAPSHOT", "java",
+                Runtime.version().feature()));
     }
 }

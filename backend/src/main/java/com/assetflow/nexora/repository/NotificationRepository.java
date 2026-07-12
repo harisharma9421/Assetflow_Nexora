@@ -1,1 +1,9 @@
-package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.Notification; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface NotificationRepository extends JpaRepository<Notification,Long>{List<Notification> findByUserIdAndReadFalse(Long userId);}
+package com.assetflow.nexora.repository;
+
+import com.assetflow.nexora.entity.Notification;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
+    List<Notification> findByUserIdAndReadFalse(Long userId);
+}

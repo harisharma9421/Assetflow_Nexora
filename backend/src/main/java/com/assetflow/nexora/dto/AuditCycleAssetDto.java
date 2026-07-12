@@ -1,1 +1,7 @@
-package com.assetflow.nexora.dto; import java.time.*; public record AuditCycleAssetDto(Long id,Long auditCycleId,Long assetId,String verificationStatus,Long verifiedBy,OffsetDateTime verifiedAt,String notes){}
+package com.assetflow.nexora.dto;
+
+import java.time.*;
+
+public record AuditCycleAssetDto(Long id, Long auditCycleId, Long assetId, String verificationStatus, Long verifiedBy,
+        OffsetDateTime verifiedAt, String notes) {
+}

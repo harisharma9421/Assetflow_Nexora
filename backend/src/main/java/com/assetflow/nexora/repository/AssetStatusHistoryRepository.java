@@ -1,1 +1,9 @@
-package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.AssetStatusHistory; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface AssetStatusHistoryRepository extends JpaRepository<AssetStatusHistory,Long>{List<AssetStatusHistory> findByAssetIdOrderByChangedAtDesc(Long assetId);}
+package com.assetflow.nexora.repository;
+
+import com.assetflow.nexora.entity.AssetStatusHistory;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AssetStatusHistoryRepository extends JpaRepository<AssetStatusHistory, Long> {
+    List<AssetStatusHistory> findByAssetIdOrderByChangedAtDesc(Long assetId);
+}

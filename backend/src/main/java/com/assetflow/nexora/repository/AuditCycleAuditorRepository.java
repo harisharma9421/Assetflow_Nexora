@@ -1,1 +1,9 @@
-package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.AuditCycleAuditor; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface AuditCycleAuditorRepository extends JpaRepository<AuditCycleAuditor,AuditCycleAuditor.Key>{List<AuditCycleAuditor> findByAuditCycleId(Long auditCycleId);}
+package com.assetflow.nexora.repository;
+
+import com.assetflow.nexora.entity.AuditCycleAuditor;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AuditCycleAuditorRepository extends JpaRepository<AuditCycleAuditor, AuditCycleAuditor.Key> {
+    List<AuditCycleAuditor> findByAuditCycleId(Long auditCycleId);
+}

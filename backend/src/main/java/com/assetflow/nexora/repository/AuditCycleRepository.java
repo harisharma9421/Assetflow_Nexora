@@ -1,1 +1,9 @@
-package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.AuditCycle; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface AuditCycleRepository extends JpaRepository<AuditCycle,Long>{List<AuditCycle> findByStatus(String status);}
+package com.assetflow.nexora.repository;
+
+import com.assetflow.nexora.entity.AuditCycle;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AuditCycleRepository extends JpaRepository<AuditCycle, Long> {
+    List<AuditCycle> findByStatus(String status);
+}

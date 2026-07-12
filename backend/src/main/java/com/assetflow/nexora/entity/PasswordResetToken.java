@@ -1,2 +1,29 @@
 package com.assetflow.nexora.entity;
-import jakarta.persistence.*; import java.time.*; @Entity @Table(name="password_reset_tokens") public class PasswordResetToken { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Column(name="token_id") public Long id; @Column(name="user_id",nullable=false) public Long userId; @Column(name="token_hash",nullable=false) public String tokenHash; @Column(name="expires_at",nullable=false) public OffsetDateTime expiresAt; @Column(name="used_at") public OffsetDateTime usedAt; @Column(name="created_at",nullable=false) public OffsetDateTime createdAt; @PrePersist void created(){if(createdAt==null)createdAt=OffsetDateTime.now(ZoneOffset.UTC);} }
+
+import jakarta.persistence.*;
+import java.time.*;
+
+@Entity
+@Table(name = "password_reset_tokens")
+public class PasswordResetToken {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "token_id")
+    public Long id;
+    @Column(name = "user_id", nullable = false)
+    public Long userId;
+    @Column(name = "token_hash", nullable = false)
+    public String tokenHash;
+    @Column(name = "expires_at", nullable = false)
+    public OffsetDateTime expiresAt;
+    @Column(name = "used_at")
+    public OffsetDateTime usedAt;
+    @Column(name = "created_at", nullable = false)
+    public OffsetDateTime createdAt;
+
+    @PrePersist
+    void created() {
+        if (createdAt == null)
+            createdAt = OffsetDateTime.now(ZoneOffset.UTC);
+    }
+}

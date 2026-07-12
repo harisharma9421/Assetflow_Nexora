@@ -1,1 +1,9 @@
-package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.PasswordResetToken; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken,Long>{List<PasswordResetToken> findByUserId(Long userId);Optional<PasswordResetToken> findFirstByTokenHashOrderByCreatedAtDesc(String tokenHash);}
+package com.assetflow.nexora.repository;
+
+import com.assetflow.nexora.entity.PasswordResetToken;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
+    List<PasswordResetToken> findByUserId(Long userId);
+Optional<PasswordResetToken> findFirstByTokenHashOrderByCreatedAtDesc(String tokenHash);}

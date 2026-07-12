@@ -1,2 +1,31 @@
 package com.assetflow.nexora.entity;
-import jakarta.persistence.*; import java.time.*; @Entity @Table(name="asset_status_history") public class AssetStatusHistory { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Column(name="history_id") public Long id; @Column(name="asset_id",nullable=false) public Long assetId; @Column(name="from_status",length=30) public String fromStatus; @Column(name="to_status",nullable=false,length=30) public String toStatus; @Column(length=255) public String reason; @Column(name="changed_by",nullable=false) public Long changedBy; @Column(name="changed_at",nullable=false) public OffsetDateTime changedAt; @PrePersist void created(){if(changedAt==null)changedAt=OffsetDateTime.now(ZoneOffset.UTC);} }
+
+import jakarta.persistence.*;
+import java.time.*;
+
+@Entity
+@Table(name = "asset_status_history")
+public class AssetStatusHistory {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "history_id")
+    public Long id;
+    @Column(name = "asset_id", nullable = false)
+    public Long assetId;
+    @Column(name = "from_status", length = 30)
+    public String fromStatus;
+    @Column(name = "to_status", nullable = false, length = 30)
+    public String toStatus;
+    @Column(length = 255)
+    public String reason;
+    @Column(name = "changed_by", nullable = false)
+    public Long changedBy;
+    @Column(name = "changed_at", nullable = false)
+    public OffsetDateTime changedAt;
+
+    @PrePersist
+    void created() {
+        if (changedAt == null)
+            changedAt = OffsetDateTime.now(ZoneOffset.UTC);
+    }
+}

@@ -1,1 +1,7 @@
-package com.assetflow.nexora.dto; import java.time.*; public record AssetStatusHistoryDto(Long id,Long assetId,String fromStatus,String toStatus,String reason,Long changedBy,OffsetDateTime changedAt){}
+package com.assetflow.nexora.dto;
+
+import java.time.*;
+
+public record AssetStatusHistoryDto(Long id, Long assetId, String fromStatus, String toStatus, String reason,
+        Long changedBy, OffsetDateTime changedAt) {
+}
