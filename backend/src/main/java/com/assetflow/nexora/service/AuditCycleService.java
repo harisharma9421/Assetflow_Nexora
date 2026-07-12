@@ -177,4 +177,37 @@ public class AuditCycleService {
 
         return toResponse(saved);
     }
+
+    public AuditCycleResponse closeAuditCycle(Long auditCycleId, Long closedBy) {
+        AuditCycle auditCycle = findAuditCycle(auditCycleId);
+
+        // Validate audit cycle is in In Progress status
+        if (!"In Progress".equals(auditCycle.status)) {
+            throw new BadRequestException("Only in-progress audit cycles can be closed");
+        }
+
+        // Validate user exists
+        users.findById(closedBy).orElseThrow(
+                () -> new ResourceNotFoundException("User with id " + closedBy + " was not found"));
+
+        // Close the audit cycle
+        auditCycle.status = "Closed";
+        auditCycle.closedBy = closedBy;
+        auditCycle.closedAt = OffsetDateTime.now(ZoneOffset.UTC);
+
+        // Update confirmed missing assets to Lost status
+        List<AuditCycleAsset> missingAssets = auditCycleAssets.findByAuditCycleId(auditCycleId).stream()
+                .filter(a -> "Missing".equals(a.verificationStatus)).toList();
+
+        for (AuditCycleAsset missingAsset : missingAssets) {
+            Asset asset = assets.findById(missingAsset.assetId).orElse(null);
+            if (asset != null) {
+                asset.status = "Lost";
+                assets.save(asset);
+            }
+        }
+
+        AuditCycle saved = auditCycles.save(auditCycle);
+        return toResponse(saved);
+    }
 }

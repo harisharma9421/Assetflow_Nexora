@@ -57,6 +57,10 @@ public class AuditCycleAssetService {
                 () -> new ResourceNotFoundException(
                         "Audit cycle with id " + auditAsset.auditCycleId + " was not found"));
 
+        if ("Closed".equals(auditCycle.status)) {
+            throw new BadRequestException("Cannot verify assets in a closed audit cycle");
+        }
+
         if (!"In Progress".equals(auditCycle.status)) {
             throw new BadRequestException("Only assets in in-progress audit cycles can be verified");
         }

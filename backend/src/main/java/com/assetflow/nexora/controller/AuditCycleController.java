@@ -80,4 +80,14 @@ public class AuditCycleController {
         AuditCycleResponse response = auditCycleService.startAuditCycle(auditCycleId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{auditCycleId}/close")
+    @PreAuthorize("hasAnyRole('ASSET_MANAGER', 'ADMIN')")
+    @Operation(summary = "Close audit cycle", description = "Close an audit cycle, lock it from further changes, and update missing assets to Lost")
+    public ResponseEntity<AuditCycleResponse> closeAuditCycle(@PathVariable Long auditCycleId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        AuditCycleResponse response = auditCycleService.closeAuditCycle(auditCycleId, userId);
+        return ResponseEntity.ok(response);
+    }
 }
