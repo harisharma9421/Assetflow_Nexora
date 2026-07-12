@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import api from "@/lib/api";
+import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import {
   PageHeader,
@@ -55,6 +56,18 @@ interface Employee {
 interface Department {
   id: number;
   name: string;
+}
+
+interface BackendAllocation {
+  id: number;
+  assetId: number;
+  holderType: "Employee" | "Department" | string;
+  holderEmployeeId: number | null;
+  holderDepartmentId: number | null;
+  allocationDate: string;
+  expectedReturnDate: string;
+  actualReturnDate?: string | null;
+  status: string;
 }
 
 const mockEmployees = [
@@ -95,6 +108,7 @@ const mockAllocations: Allocation[] = [
 ];
 
 export default function AllocationsPage() {
+  const currentUser = useAuthStore((state) => state.user);
   const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -125,10 +139,10 @@ export default function AllocationsPage() {
     async function loadData() {
       try {
         setLoading(true);
-        // Load employees & departments
-        const [empRes, deptRes] = await Promise.allSettled([
-          api.get("/users/search"), // Search endpoint in UserDirectory
+        const [empRes, deptRes, allocationRes] = await Promise.allSettled([
+          api.get("/users"),
           api.get("/departments"),
+          api.get<BackendAllocation[]>("/allocations"),
         ]);
 
         if (empRes.status === "fulfilled") setEmployees(empRes.value.data);
@@ -137,12 +151,37 @@ export default function AllocationsPage() {
         if (deptRes.status === "fulfilled") setDepartments(deptRes.value.data);
         else setDepartments(mockDepartments);
 
-        // Fetch allocations (often mapped on reports or assets endpoint)
-        // For fallback, use mock data
-        setAllocations(mockAllocations);
+        if (allocationRes.status === "fulfilled") {
+          setAllocations(
+            allocationRes.value.data.map((allocation) => ({
+              id: allocation.id,
+              assetId: allocation.assetId,
+              assetTag: `Asset #${allocation.assetId}`,
+              assetName: `Asset #${allocation.assetId}`,
+              holderType: allocation.holderType === "Department" ? "Department" : "Employee",
+              holderName:
+                allocation.holderEmployeeId !== null
+                  ? `Employee #${allocation.holderEmployeeId}`
+                  : allocation.holderDepartmentId !== null
+                    ? `Department #${allocation.holderDepartmentId}`
+                    : "Unassigned holder",
+              allocationDate: allocation.allocationDate,
+              expectedReturnDate: allocation.expectedReturnDate,
+              actualReturnDate: allocation.actualReturnDate ?? undefined,
+              status:
+                allocation.status === "Returned"
+                  ? "Returned"
+                  : allocation.status === "Overdue"
+                    ? "Overdue"
+                    : "Active",
+            }))
+          );
+        } else {
+          setAllocations(mockAllocations);
+        }
 
         // Fetch available assets for checkout dropdown
-        const assetsRes = await api.get("/assets?status=Available");
+        const assetsRes = await api.get("/assets?status=AVAILABLE");
         setAvailableAssets(assetsRes.data && assetsRes.data.length > 0 ? assetsRes.data : [
           { id: 2, assetTag: "NX-HW-1025", name: "Dell UltraSharp 32 Monitor", status: "Available" },
         ]);
@@ -174,10 +213,16 @@ export default function AllocationsPage() {
         holderType: checkoutForm.holderType,
         holderEmployeeId: checkoutForm.holderType === "Employee" ? parseInt(checkoutForm.holderEmployeeId) : null,
         holderDepartmentId: checkoutForm.holderType === "Department" ? parseInt(checkoutForm.holderDepartmentId) : null,
+        allocatedBy: currentUser?.id,
         expectedReturnDate: checkoutForm.expectedReturnDate,
       };
 
-      await api.post(`/assets/${checkoutForm.assetId}/allocate`, payload);
+      if (!payload.allocatedBy) {
+        toast.error("Your session does not include a user id. Please log in again.");
+        return;
+      }
+
+      await api.post("/allocations", payload);
       toast.success("Asset checkout completed successfully!");
       setIsCheckoutOpen(false);
       // Reload page state
@@ -213,7 +258,15 @@ export default function AllocationsPage() {
     if (!selectedAllocation) return;
 
     try {
-      await api.post(`/assets/${selectedAllocation.assetId}/return`);
+      if (!currentUser?.id) {
+        toast.error("Your session does not include a user id. Please log in again.");
+        return;
+      }
+
+      await api.post(`/allocations/${selectedAllocation.id}/return`, {
+        returnedTo: currentUser.id,
+        actualReturnDate: new Date().toISOString().split("T")[0],
+      });
       toast.success("Asset returned and marked as Available!");
       setIsReturnOpen(false);
       setSelectedAllocation(null);

@@ -1,497 +1,429 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Package,
-  UserCheck,
-  Wrench,
+  AlertTriangle,
+  BarChart3,
+  Building2,
   CalendarDays,
+  CheckCircle2,
+  ClipboardCheck,
+  FileCheck2,
+  Package,
   PlusCircle,
-  ArrowRight,
-  TrendingUp,
-  AlertCircle,
-  ArrowUpRight,
+  ShieldCheck,
+  UserCheck,
+  Users,
+  Wrench,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
-  AreaChart,
-  Area,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
 } from "recharts";
 
-import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
+import { DataTable, StatCard, StatusBadge, UserAvatar } from "@/components/shared";
+import { ROUTES, USER_ROLE_LABELS, USER_ROLES } from "@/lib/constants";
+import { useAuth } from "@/hooks/useAuth";
+import type { UserRole } from "@/types/auth.types";
 import {
-  StatCard,
-  StatusBadge,
-  UserAvatar,
-  Timeline,
-  DataTable,
-} from "@/components/shared";
+  fallbackDashboardKpis,
+  getDashboardKpis,
+  getOverdueReturns,
+  type DashboardKpis,
+  type OverdueReturn,
+} from "@/features/dashboard/dashboard.api";
 
-// ─── MOCK DATA FOR DEMONSTRATION ──────────────────────────────────────────────
-
-const assetUtilizationData = [
-  { month: "Jan", allocated: 65, maintenance: 12, available: 23 },
-  { month: "Feb", allocated: 70, maintenance: 8, available: 22 },
-  { month: "Mar", allocated: 78, maintenance: 10, available: 12 },
-  { month: "Apr", allocated: 82, maintenance: 15, available: 3 },
-  { month: "May", allocated: 80, maintenance: 14, available: 6 },
-  { month: "Jun", allocated: 85, maintenance: 9, available: 6 },
+const chartData = [
+  { label: "Available", value: 42 },
+  { label: "Allocated", value: 58 },
+  { label: "Maintenance", value: 11 },
+  { label: "Bookings", value: 24 },
 ];
 
-const categoryDistribution = [
-  { name: "Electronics", value: 45, color: "#4F46E5" },
-  { name: "Furniture", value: 25, color: "#10B981" },
-  { name: "Vehicles", value: 15, color: "#F59E0B" },
-  { name: "Lab Equipment", value: 15, color: "#EC4899" },
-];
+interface RoleDashboardConfig {
+  eyebrow: string;
+  title: string;
+  description: string;
+  primaryAction: { label: string; href: string };
+  secondaryAction: { label: string; href: string };
+  focusTitle: string;
+  focusItems: Array<{ title: string; description: string; status: string; href: string }>;
+}
 
-const recentActivities = [
-  {
-    id: 1,
-    title: "Dell Latitude 5420 Allocated",
-    description: "Assigned to Sarah Jenkins (Engineering Dept) by Admin",
-    timestamp: "10 mins ago",
-    status: "info" as const,
-    icon: <UserCheck className="h-4.5 w-4.5" />,
+const dashboardConfig: Record<UserRole, RoleDashboardConfig> = {
+  ADMIN: {
+    eyebrow: "Administrator Command Center",
+    title: "Organization-wide asset control",
+    description:
+      "Monitor inventory health, user governance, department setup, audit coverage, and operational exceptions from one command center.",
+    primaryAction: { label: "Manage Users", href: ROUTES.SETTINGS.USERS },
+    secondaryAction: { label: "Open Reports", href: ROUTES.REPORTS },
+    focusTitle: "Admin Priorities",
+    focusItems: [
+      {
+        title: "Role governance",
+        description: "Review user access, departments, and active organization settings.",
+        status: "ACTIVE",
+        href: ROUTES.SETTINGS.USERS,
+      },
+      {
+        title: "Audit readiness",
+        description: "Track open audits and unresolved verification discrepancies.",
+        status: "PENDING",
+        href: ROUTES.AUDITS,
+      },
+      {
+        title: "Executive reports",
+        description: "Export asset, utilization, maintenance, and audit summaries.",
+        status: "APPROVED",
+        href: ROUTES.REPORTS,
+      },
+    ],
   },
-  {
-    id: 2,
-    title: "Maintenance Completed",
-    description: "Projector AF-889 returned to Available status after lamp replacement",
-    timestamp: "2 hours ago",
-    status: "success" as const,
-    icon: <Wrench className="h-4.5 w-4.5" />,
+  ASSET_MANAGER: {
+    eyebrow: "Asset Manager Dashboard",
+    title: "Lifecycle operations and approvals",
+    description:
+      "Register assets, manage allocations, approve transfers, handle maintenance workflows, and keep every asset status accountable.",
+    primaryAction: { label: "Register Asset", href: ROUTES.ASSETS },
+    secondaryAction: { label: "New Allocation", href: ROUTES.ALLOCATIONS },
+    focusTitle: "Operational Queue",
+    focusItems: [
+      {
+        title: "Allocation queue",
+        description: "Approve new assignments and complete pending returns.",
+        status: "PENDING",
+        href: ROUTES.ALLOCATIONS,
+      },
+      {
+        title: "Maintenance approvals",
+        description: "Prioritize high-impact repairs and technician assignments.",
+        status: "IN_PROGRESS",
+        href: ROUTES.MAINTENANCE,
+      },
+      {
+        title: "Transfer requests",
+        description: "Resolve holder changes without losing custody history.",
+        status: "PENDING_APPROVAL",
+        href: ROUTES.TRANSFERS,
+      },
+    ],
   },
-  {
-    id: 3,
-    title: "New Asset Registered",
-    description: "MacBook Pro M3 (SN: C02JX78K) added to Lab Equipment",
-    timestamp: "4 hours ago",
-    status: "neutral" as const,
-    icon: <Package className="h-4.5 w-4.5" />,
+  DEPARTMENT_HEAD: {
+    eyebrow: "Department Head Dashboard",
+    title: "Department assets and requests",
+    description:
+      "View assigned departmental assets, monitor resource bookings, approve requests, and keep your team compliant.",
+    primaryAction: { label: "Book Resource", href: ROUTES.BOOKINGS },
+    secondaryAction: { label: "View Assets", href: ROUTES.ASSETS },
+    focusTitle: "Department Watchlist",
+    focusItems: [
+      {
+        title: "Department inventory",
+        description: "Review active assets assigned to your people and department.",
+        status: "ACTIVE",
+        href: ROUTES.ASSETS,
+      },
+      {
+        title: "Upcoming returns",
+        description: "Avoid overdue custody gaps before return dates pass.",
+        status: "PENDING",
+        href: ROUTES.ALLOCATIONS,
+      },
+      {
+        title: "Booking calendar",
+        description: "Coordinate rooms, vehicles, and shared equipment.",
+        status: "APPROVED",
+        href: ROUTES.BOOKINGS,
+      },
+    ],
   },
-  {
-    id: 4,
-    title: "Audit Discrepancy Flagged",
-    description: "Projector AF-102 noted as 'Missing' during Annual Stock Audit",
-    timestamp: "Yesterday",
-    status: "danger" as const,
-    icon: <AlertCircle className="h-4.5 w-4.5" />,
+  EMPLOYEE: {
+    eyebrow: "Employee Workspace",
+    title: "My assets, bookings, and requests",
+    description:
+      "See what is assigned to you, book shared resources, raise maintenance requests, and follow the status of your submissions.",
+    primaryAction: { label: "Book Resource", href: ROUTES.BOOKINGS },
+    secondaryAction: { label: "Raise Maintenance", href: ROUTES.MAINTENANCE },
+    focusTitle: "My Work Items",
+    focusItems: [
+      {
+        title: "Assigned assets",
+        description: "Check custody, condition, and expected return dates.",
+        status: "ACTIVE",
+        href: ROUTES.ASSETS,
+      },
+      {
+        title: "Maintenance requests",
+        description: "Report issues and track repair progress.",
+        status: "IN_PROGRESS",
+        href: ROUTES.MAINTENANCE,
+      },
+      {
+        title: "Resource bookings",
+        description: "Reserve bookable assets without schedule conflicts.",
+        status: "APPROVED",
+        href: ROUTES.BOOKINGS,
+      },
+    ],
   },
-];
+};
 
-const upcomingReturns = [
-  {
-    id: "RET-101",
-    asset: "MacBook Pro 16\"",
-    holder: "Alex Mercer",
-    dueDate: "2026-07-15",
-    status: "ACTIVE",
-  },
-  {
-    id: "RET-102",
-    asset: "Sony Projector",
-    holder: "Marketing Lab",
-    dueDate: "2026-07-12",
-    status: "OVERDUE",
-  },
-  {
-    id: "RET-103",
-    asset: "iPad Air Gen 5",
-    holder: "David K.",
-    dueDate: "2026-07-18",
-    status: "ACTIVE",
-  },
-];
-
-const pendingMaintenance = [
-  {
-    id: "MTN-204",
-    asset: "Laser Cutter v2",
-    issue: "Calibrator failure",
-    priority: "Critical",
-    status: "PENDING",
-  },
-  {
-    id: "MTN-205",
-    asset: "Tesla Charger 3",
-    issue: "No power delivery",
-    priority: "High",
-    status: "IN_PROGRESS",
-  },
-  {
-    id: "MTN-206",
-    asset: "Office Desk Chair",
-    issue: "Broken hydraulic lift",
-    priority: "Low",
-    status: "PENDING",
-  },
-];
-
-const latestAssets = [
-  {
-    id: "AST-1001",
-    tag: "NX-8890",
-    name: "MacBook Pro M3",
-    category: "Electronics",
-    condition: "New",
-    status: "AVAILABLE",
-  },
-  {
-    id: "AST-1002",
-    tag: "NX-3212",
-    name: "Dell UltraSharp 32\"",
-    category: "Electronics",
-    condition: "Good",
-    status: "ALLOCATED",
-  },
-  {
-    id: "AST-1003",
-    tag: "NX-7789",
-    name: "Conference Room Pod",
-    category: "Furniture",
-    condition: "Good",
-    status: "RESERVED",
-  },
-  {
-    id: "AST-1004",
-    tag: "NX-1045",
-    name: "Oscilloscope Rig B",
-    category: "Lab Equipment",
-    condition: "Fair",
-    status: "UNDER_MAINTENANCE",
-  },
-];
+function valueOrFallback(value: number | undefined, fallback: number) {
+  return value && value > 0 ? value : fallback;
+}
 
 export default function DashboardPage() {
-  const user = useAuthStore((s) => s.user);
-  const userName = user?.fullName || "Operator";
-  const orgName = "Nexora ERP Platform";
+  const { user, currentRole } = useAuth();
+  const role = currentRole ?? USER_ROLES.EMPLOYEE;
+  const config = dashboardConfig[role];
+  const [kpis, setKpis] = useState<DashboardKpis>(fallbackDashboardKpis);
+  const [overdueReturns, setOverdueReturns] = useState<OverdueReturn[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiStatus, setApiStatus] = useState<"connected" | "offline">("connected");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDashboard() {
+      try {
+        const [kpiData, overdueData] = await Promise.all([
+          getDashboardKpis(),
+          getOverdueReturns(),
+        ]);
+
+        if (!isMounted) return;
+        setKpis(kpiData);
+        setOverdueReturns(overdueData);
+        setApiStatus("connected");
+      } catch {
+        if (!isMounted) return;
+        setKpis(fallbackDashboardKpis);
+        setOverdueReturns([]);
+        setApiStatus("offline");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const statCards = useMemo(
+    () => [
+      {
+        title: role === "EMPLOYEE" ? "Available Resources" : "Assets Available",
+        value: valueOrFallback(kpis.assetsAvailable, 42),
+        icon: <Package className="h-5 w-5" />,
+        description: "Ready for allocation or booking",
+      },
+      {
+        title: role === "EMPLOYEE" ? "My Active Items" : "Active Allocations",
+        value: valueOrFallback(kpis.assetsAllocated, 58),
+        icon: <UserCheck className="h-5 w-5" />,
+        description: "Currently checked out",
+      },
+      {
+        title: "Maintenance Today",
+        value: valueOrFallback(kpis.maintenanceToday, 11),
+        icon: <Wrench className="h-5 w-5" />,
+        description: "Needs attention or follow-up",
+      },
+      {
+        title: "Active Bookings",
+        value: valueOrFallback(kpis.activeBookings, 24),
+        icon: <CalendarDays className="h-5 w-5" />,
+        description: "Shared resources scheduled",
+      },
+    ],
+    [kpis, role]
+  );
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
-      {/* ─── WELCOME BANNER ─────────────────────────────────────────────────── */}
-      <motion.div
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm"
       >
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute left-1/3 bottom-0 -mb-16 h-36 w-36 rounded-full bg-blue-500/5 blur-2xl" />
-
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <UserAvatar name={userName} size="lg" />
+        <div className="absolute right-0 top-0 h-44 w-44 translate-x-12 -translate-y-12 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <UserAvatar name={user?.fullName || config.eyebrow} size="lg" />
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                {orgName} · Administrator
-              </span>
-              <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-0.5">
-                Welcome back, {userName}!
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Here is your operational overview for Nexora Resource Management today.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link href="/assets">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<PlusCircle className="h-4 w-4" />}
-                className="h-10 rounded-xl"
-              >
-                Quick Register
-              </Button>
-            </Link>
-            <Link href="/allocations">
-              <Button
-                variant="primary"
-                size="sm"
-                className="h-10 rounded-xl"
-              >
-                New Allocation
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ─── STATISTICS CARDS ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Assets"
-          value="1,482"
-          change={8.2}
-          changeLabel="vs last quarter"
-          icon={<Package className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Active Allocations"
-          value="892"
-          change={12.4}
-          changeLabel="vs last month"
-          icon={<UserCheck className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Pending Maintenance"
-          value="14"
-          change={-5.8}
-          changeLabel="vs last week"
-          icon={<Wrench className="h-5 w-5" />}
-        />
-        <StatCard
-          title="Room & Resource Bookings"
-          value="128"
-          change={2.1}
-          changeLabel="vs last month"
-          icon={<CalendarDays className="h-5 w-5" />}
-        />
-      </div>
-
-      {/* ─── CHARTS & METRICS ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main Utilization Area Chart */}
-        <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-bold text-foreground">
-                Asset Allocation Trends
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Historical split of active, idle and maintenance states.
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground border border-border">
-              <TrendingUp className="h-3.5 w-3.5 text-green-500" />
-              <span>+14% Utilized</span>
-            </div>
-          </div>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={assetUtilizationData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorAllocated" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                <XAxis dataKey="month" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="allocated"
-                  stackId="1"
-                  stroke="#4F46E5"
-                  fillOpacity={1}
-                  fill="url(#colorAllocated)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Category breakdown pie chart */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="text-base font-bold text-foreground">
-            Category Distribution
-          </h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Percentage split of registered physical assets.
-          </p>
-          <div className="flex items-center justify-center h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={75}
-                  paddingAngle={4}
-                  dataKey="value"
-                >
-                  {categoryDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {categoryDistribution.map((cat) => (
-              <div key={cat.name} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                <span className="text-xs font-semibold text-foreground truncate">
-                  {cat.name} ({cat.value})
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                  {config.eyebrow}
+                </span>
+                <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                  {USER_ROLE_LABELS[role]}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                  {apiStatus === "connected" ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                  )}
+                  {apiStatus === "connected" ? "Live API" : "API fallback"}
                 </span>
               </div>
+              <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+                {config.title}
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {config.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Link href={config.secondaryAction.href}>
+              <Button variant="outline" leftIcon={<BarChart3 className="h-4 w-4" />}>
+                {config.secondaryAction.label}
+              </Button>
+            </Link>
+            <Link href={config.primaryAction.href}>
+              <Button leftIcon={<PlusCircle className="h-4 w-4" />}>
+                {config.primaryAction.label}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </motion.section>
+
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((card) => (
+          <StatCard
+            key={card.title}
+            title={card.title}
+            value={isLoading ? "..." : card.value}
+            description={card.description}
+            icon={card.icon}
+          />
+        ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm xl:col-span-2">
+          <div className="mb-5 flex flex-col gap-1">
+            <h2 className="text-base font-bold text-foreground">Operational Mix</h2>
+            <p className="text-xs text-muted-foreground">
+              Role-neutral overview from the dashboard KPI service.
+            </p>
+          </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--color-border))" />
+                <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip />
+                <Bar dataKey="value" fill="hsl(var(--color-primary))" radius={[10, 10, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <h2 className="text-base font-bold text-foreground">{config.focusTitle}</h2>
+              <p className="text-xs text-muted-foreground">Actionable work for this role.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            {config.focusItems.map((item) => (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">{item.title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </div>
+              </Link>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ─── GRID: RECENT ACTIVITIES, ACTION PANELS ─────────────────────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column: Recent Activities Timeline */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-foreground">
-                Real-Time Logs
-              </h3>
-              <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-foreground">Overdue Returns</h2>
+              <p className="text-xs text-muted-foreground">
+                Pulled from the backend overdue-return view when available.
+              </p>
             </div>
-            <Timeline items={recentActivities} />
+            <Link href={ROUTES.ALLOCATIONS}>
+              <Button variant="outline" size="sm">
+                Manage
+              </Button>
+            </Link>
           </div>
-          <Link href="/activity-logs" className="self-start mt-4">
-            <Button
-              variant="link"
-              size="sm"
-              rightIcon={<ArrowRight className="h-4 w-4" />}
-              className="text-xs font-bold text-primary"
-            >
-              View all activity logs
-            </Button>
-          </Link>
+          <DataTable
+            columns={[
+              { key: "assetTag", header: "Tag" },
+              { key: "assetName", header: "Asset" },
+              { key: "expectedReturnDate", header: "Expected Return" },
+              {
+                key: "daysOverdue",
+                header: "Delay",
+                render: (row) => <StatusBadge status={`${row.daysOverdue} days`} variant="danger" />,
+              },
+            ]}
+            data={overdueReturns.map((item) => ({
+              ...item,
+              id: item.allocationId,
+            }))}
+            emptyTitle="No overdue returns found"
+            emptyDescription="All active allocations are currently within their expected return window."
+          />
         </div>
 
-        {/* Center Column: Upcoming Returns & Notifications */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold text-foreground mb-3">
-              Upcoming Returns
-            </h3>
-            <div className="flex flex-col gap-3">
-              {upcomingReturns.map((ret) => (
-                <div
-                  key={ret.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background p-3 hover:bg-muted transition-colors duration-150"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {ret.asset}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Holder: {ret.holder} · Due: {ret.dueDate}
-                    </p>
-                  </div>
-                  <StatusBadge status={ret.status} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <Link href="/allocations" className="self-start mt-4">
-            <Button
-              variant="link"
-              size="sm"
-              rightIcon={<ArrowRight className="h-4 w-4" />}
-              className="text-xs font-bold text-primary"
-            >
-              Manage active allocations
-            </Button>
-          </Link>
-        </div>
-
-        {/* Right Column: Pending Maintenance Requests */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold text-foreground mb-3">
-              Pending Maintenance
-            </h3>
-            <div className="flex flex-col gap-3">
-              {pendingMaintenance.map((maint) => (
-                <div
-                  key={maint.id}
-                  className="flex items-center justify-between rounded-xl border border-border bg-background p-3 hover:bg-muted transition-colors duration-150"
-                >
-                  <div className="min-w-0 flex-1 pr-2">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {maint.asset}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      Issue: {maint.issue} · Priority: {maint.priority}
-                    </p>
-                  </div>
-                  <StatusBadge status={maint.status} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <Link href="/maintenance" className="self-start mt-4">
-            <Button
-              variant="link"
-              size="sm"
-              rightIcon={<ArrowRight className="h-4 w-4" />}
-              className="text-xs font-bold text-primary"
-            >
-              Open maintenance center
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* ─── LATEST ASSETS TABLE ────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h3 className="text-base font-bold text-foreground">
-              Recently Registered Assets
-            </h3>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-5">
+            <h2 className="text-base font-bold text-foreground">Role Capabilities</h2>
             <p className="text-xs text-muted-foreground">
-              Physical inventory checked in during the last 48 hours.
+              Clear ownership across the four approved AssetFlow roles.
             </p>
           </div>
-          <Link href="/assets">
-            <Button
-              variant="outline"
-              size="sm"
-              rightIcon={<ArrowUpRight className="h-3.5 w-3.5" />}
-              className="h-9 text-xs font-semibold rounded-xl bg-card hover:bg-muted"
-            >
-              Inventory Directory
-            </Button>
-          </Link>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {[
+              { role: "Admin", icon: Users, text: "Users, departments, reports, and audit oversight." },
+              { role: "Asset Manager", icon: ClipboardCheck, text: "Assets, allocations, transfers, and maintenance." },
+              { role: "Department Head", icon: Building2, text: "Department assets, bookings, and approvals." },
+              { role: "Employee", icon: FileCheck2, text: "Assigned assets, bookings, and service requests." },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.role} className="rounded-xl border border-border bg-background p-4">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <h3 className="mt-3 text-sm font-bold text-foreground">{item.role}</h3>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.text}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
-
-        <DataTable
-          columns={[
-            { key: "tag", header: "Asset Tag" },
-            { key: "name", header: "Asset Name" },
-            { key: "category", header: "Category" },
-            {
-              key: "condition",
-              header: "Condition",
-              render: (row) => (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-muted text-foreground border border-border">
-                  {row.condition}
-                </span>
-              ),
-            },
-            {
-              key: "status",
-              header: "Status",
-              render: (row) => <StatusBadge status={row.status} />,
-            },
-          ]}
-          data={latestAssets}
-        />
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,17 +1,26 @@
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = { title: "Organization Settings | Nexora" };
+import { Building, Layers3, ShieldCheck } from "lucide-react";
+import { ModuleWorkbench } from "@/components/shared";
 
-export default function OrganizationSettingsPage() {
+export default function OrganizationPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-[hsl(var(--color-foreground))]">
-        Organization Settings
-      </h1>
-      <p className="mt-1 text-sm text-[hsl(var(--color-muted-foreground))]">
-        Manage organization profile, logo and settings
-      </p>
-    </div>
+    <ModuleWorkbench
+      title="Organization Setup"
+      description="Centralized admin setup for the business structure that powers departments, users, categories, and role-based workflows."
+      endpoint="/roles"
+      stats={[
+        { title: "Roles", value: "4", description: "Admin, Manager, Head, Employee", icon: <ShieldCheck className="h-5 w-5" /> },
+        { title: "Structure", value: "Enterprise", description: "Designed for multi-department use", icon: <Building className="h-5 w-5" /> },
+        { title: "Modules", value: "Connected", description: "Shared setup drives all workflows", icon: <Layers3 className="h-5 w-5" /> },
+      ]}
+      columns={[
+        { key: "id", header: "Role ID" },
+        { key: "name", header: "Role" },
+        { key: "description", header: "Description" },
+      ]}
+      emptyTitle="No roles found"
+      emptyDescription="Role master data should be seeded by the backend."
+    />
   );
 }
-

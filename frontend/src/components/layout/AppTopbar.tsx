@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import {
   Bell,
@@ -15,6 +16,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { UserAvatar } from "@/components/shared";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ROUTES, USER_ROLES } from "@/lib/constants";
 import { toast } from "sonner";
 
 export default function AppTopbar() {
@@ -108,21 +110,27 @@ export default function AppTopbar() {
                   <ThemeToggle variant="pill" className="w-full" />
                 </div>
 
-                <button
+                <Link
+                  href={ROUTES.SETTINGS.PROFILE}
                   onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors text-left"
                 >
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span>My Profile</span>
-                </button>
+                </Link>
 
-                <button
+                <Link
+                  href={
+                    user?.roleName === USER_ROLES.ADMIN || user?.roleName === "Administrator"
+                      ? ROUTES.SETTINGS.ORGANIZATION
+                      : ROUTES.DASHBOARD
+                  }
                   onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors text-left"
                 >
                   <Settings className="h-4 w-4 text-muted-foreground" />
                   <span>Settings</span>
-                </button>
+                </Link>
 
                 <button
                   onClick={logout}

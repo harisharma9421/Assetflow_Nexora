@@ -8,13 +8,31 @@ import { useAuthStore } from "@/store/auth.store";
 import { USER_ROLES } from "@/lib/constants";
 import type { UserRole } from "@/types/auth.types";
 
+export function normalizeRoleName(roleName?: string | null): UserRole | null {
+  if (!roleName) return null;
+
+  const normalized = roleName
+    .trim()
+    .toUpperCase()
+    .replace(/^ROLE_/, "")
+    .replace(/ADMINISTRATOR/, "ADMIN")
+    .replace(/ASSET\s*MANAGER/, "ASSET_MANAGER")
+    .replace(/DEPARTMENT\s*HEAD/, "DEPARTMENT_HEAD")
+    .replace(/[\s-]+/g, "_");
+
+  if (Object.values(USER_ROLES).includes(normalized as UserRole)) {
+    return normalized as UserRole;
+  }
+
+  return null;
+}
+
 export function useAuth() {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const currentRole = normalizeRoleName(user?.roleName);
 
   const hasRole = (role: UserRole): boolean => {
-    if (!user?.roleName) return false;
-    const normalizedUserRole = user.roleName.toUpperCase().replace(/\s+/g, "_");
-    return normalizedUserRole === role;
+    return currentRole === role;
   };
 
   const hasAnyRole = (...roles: UserRole[]): boolean =>
@@ -43,6 +61,7 @@ export function useAuth() {
 
   return {
     user,
+    currentRole,
     isAuthenticated,
     logout,
     hasRole,
