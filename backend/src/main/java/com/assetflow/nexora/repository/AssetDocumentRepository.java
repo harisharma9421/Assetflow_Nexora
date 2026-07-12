@@ -1,1 +1,9 @@
-package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.AssetDocument; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface AssetDocumentRepository extends JpaRepository<AssetDocument,Long>{List<AssetDocument> findByAssetId(Long assetId);}
+package com.assetflow.nexora.repository;
+
+import com.assetflow.nexora.entity.AssetDocument;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AssetDocumentRepository extends JpaRepository<AssetDocument, Long> {
+    List<AssetDocument> findByAssetIdOrderByUploadedAtDesc(Long assetId);
+}
