@@ -6,54 +6,83 @@ import {
   Zap,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
   Package,
   Wrench,
   CalendarDays,
-  History,
   Eye,
   MessageSquare,
+  Building,
+  GraduationCap,
+  Activity,
+  Factory,
+  CheckCircle,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 
-// ─── MOCK BLOGS DATA FOR REDESIGNED LANDING PAGE ──────────────────────────────
+// ─── RELEVANT BLOGS DATA FOR NEXORA ERP ────────────────────────────────────────
 
 const blogPosts = [
   {
     id: 1,
-    category: "Gadget",
-    readTime: "2 min Read",
-    title: "As yen tumbles, gadget-loving Japan goes for secondhand iPhones",
-    views: 4301,
-    comments: 3,
-    date: "Fri, Jul 10",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&fit=crop&q=80",
-    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&fit=crop&q=80",
+    category: "Best Practices",
+    readTime: "3 min Read",
+    title: "How to run automated physical audits in high-density corporate environments",
+    views: 1240,
+    comments: 5,
+    date: "Jul 12, 2026",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&fit=crop&q=80", // Corporate office building
   },
   {
     id: 2,
-    category: "Social",
-    readTime: "2 min Read",
-    title: "Intel loses bid to revive antitrust case against patent foe Fortress",
-    views: 1767,
-    comments: 3,
-    date: "Thu, Jul 9",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop&q=80",
-    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&fit=crop&q=80",
+    category: "Healthcare",
+    readTime: "4 min Read",
+    title: "Optimizing medical device lifecycles to reduce clinical equipment downtime",
+    views: 980,
+    comments: 2,
+    date: "Jul 08, 2026",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=500&fit=crop&q=80", // Laboratory/medical equipment
   },
   {
     id: 3,
-    category: "Lifestyle",
-    readTime: "2 min Read",
-    title: "Streaming video way before it was cool, go dark tomorrow",
-    views: 2054,
-    comments: 8,
-    date: "Wed, Jul 8",
-    avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=80&fit=crop&q=80",
-    image: "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=500&fit=crop&q=80",
+    category: "Higher Education",
+    readTime: "3 min Read",
+    title: "Preventing classroom booking conflicts: A blueprint for modern universities",
+    views: 1450,
+    comments: 12,
+    date: "Jun 28, 2026",
+    avatar: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&fit=crop&q=80", // University campus
+  },
+];
+
+// ─── INDUSTRIES WE SERVE ─────────────────────────────────────────────────────
+
+const industries = [
+  {
+    name: "Universities & Schools",
+    desc: "Coordinate science lab apparatus, student Chromebooks, and staff lecture hall reservations.",
+    icon: <GraduationCap className="h-6 w-6" />,
+  },
+  {
+    name: "Hospitals & Healthcare",
+    desc: "Track critical ventilators, emergency beds, patient rooms, and maintenance logs.",
+    icon: <Activity className="h-6 w-6" />,
+  },
+  {
+    name: "Corporate Offices",
+    desc: "Manage company laptops, monitors, meeting spaces, hot desks, and employee allocations.",
+    icon: <Building className="h-6 w-6" />,
+  },
+  {
+    name: "Manufacturing Plants",
+    desc: "Track heavy machinery operations, check-out status, calibration cycles, and routine downtime.",
+    icon: <Factory className="h-6 w-6" />,
   },
 ];
 
@@ -75,14 +104,12 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Links */}
+          {/* Clean Links */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-500 hover:text-slate-800">
-            <Link href="#" className="hover:text-indigo-600 transition-colors">About Us</Link>
-            <Link href="#" className="text-indigo-600 font-bold border-b-2 border-indigo-600 pb-1">Blog</Link>
-            <Link href="#" className="hover:text-indigo-600 transition-colors">Portfolio <span className="ml-1 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-600">New</span></Link>
-            <Link href={ROUTES.DASHBOARD} className="hover:text-indigo-600 transition-colors">Dashboard</Link>
-            <Link href="#" className="hover:text-indigo-600 transition-colors">Pricing</Link>
-            <Link href="#" className="hover:text-indigo-600 transition-colors">Contact</Link>
+            <Link href="#features" className="hover:text-indigo-600 transition-colors">Features</Link>
+            <Link href="#solutions" className="hover:text-indigo-600 transition-colors">Solutions</Link>
+            <Link href="#about" className="hover:text-indigo-600 transition-colors">About Us</Link>
+            <Link href="#blog" className="hover:text-indigo-600 transition-colors">Resources</Link>
           </nav>
 
           {/* Action CTA */}
@@ -100,7 +127,7 @@ export default function LandingPage() {
       </header>
 
       {/* ─── HERO SECTION ───────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-20 lg:py-32">
+      <section className="relative overflow-hidden py-20 lg:py-28">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/70 via-transparent to-transparent -z-10" />
         
         <div className="mx-auto max-w-7xl px-6 text-center lg:px-8">
@@ -111,14 +138,14 @@ export default function LandingPage() {
             className="flex flex-col items-center gap-6"
           >
             <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-100 px-3.5 py-1 text-xs font-bold text-indigo-600">
-              <ShieldCheck className="h-4 w-4" /> Trusted Resource Audits & Lifecycle
+              <ShieldCheck className="h-4 w-4" /> Enterprise-Grade Lifecycle & Audits
             </span>
 
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl max-w-3xl leading-[1.15]">
-              Intelligent Enterprise Asset & Resource Management
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl max-w-4xl leading-[1.15]">
+              Intelligent Asset & Resource Management for Modern Organizations
             </h1>
             <p className="max-w-2xl text-base text-slate-500 sm:text-lg">
-              Nexora is a centralized SaaS platform replacing spreadsheets and manual registers with real-time operational visibility, maintenance pipelines, and audit controls.
+              Nexora answers: <i>What assets exist, where are they located, who has them, and what is their current condition?</i> Replaces manual spreadsheets with a centralized, secure control system.
             </p>
 
             <div className="flex items-center gap-3.5 mt-2">
@@ -128,7 +155,7 @@ export default function LandingPage() {
                   rightIcon={<ArrowRight className="h-4.5 w-4.5" />}
                   className="rounded-xl px-7"
                 >
-                  Explore Dashboard
+                  Access Console
                 </Button>
               </Link>
               <Link href={ROUTES.REGISTER}>
@@ -137,7 +164,7 @@ export default function LandingPage() {
                   size="lg"
                   className="rounded-xl px-7 bg-white hover:bg-slate-50"
                 >
-                  Register Team
+                  Register Organization
                 </Button>
               </Link>
             </div>
@@ -145,14 +172,154 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── BLOG ARTICLES SECTION (AS SEEN IN SCREENSHOT) ───────────────────── */}
-      <section className="py-16 bg-white border-t border-slate-100">
+      {/* ─── SOLUTIONS (INDUSTRIES) SECTION ─────────────────────────────────── */}
+      <section id="solutions" className="py-20 bg-white border-t border-slate-100">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex flex-col gap-2 mb-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">Our Publication</span>
-            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight sm:text-3xl">
-              Latest Insights & System Updates
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">Tailored Configurations</span>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl mt-2">
+              One platform. Configured for any industry.
             </h2>
+            <p className="mt-3 text-sm text-slate-500">
+              Nexora scales across organizations to support the distinct requirements of workspace administrators, facility leads, and equipment coordinators.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {industries.map((ind, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col p-6 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 mb-5">
+                  {ind.icon}
+                </div>
+                <h3 className="text-base font-bold text-slate-900">{ind.name}</h3>
+                <p className="mt-2 text-xs text-slate-500 leading-relaxed">{ind.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SYSTEM FEATURES SECTION ────────────────────────────────────────── */}
+      <section id="features" className="py-20 bg-slate-50 border-t border-slate-100">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">System Modules</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 mt-2">
+              Unified Inventory & Operations Management
+            </h2>
+            <p className="mt-3 text-sm text-slate-500">
+              Eliminate missing items, double-booked equipment, and unscheduled maintenance downtime.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "Asset Directory",
+                desc: "Full visibility of physical assets with unique tags, custom category fields, and QR code tracking.",
+                icon: <Package className="h-6 w-6" />,
+              },
+              {
+                title: "Owner Allocations",
+                desc: "Assign assets to employees or departments with explicit due dates. Prevents overlapping allocations.",
+                icon: <Users className="h-6 w-6" />,
+              },
+              {
+                title: "Resource Bookings",
+                desc: "Reserve conference rooms, labs, or tools. Built-in overlap prevention guarantees zero double-bookings.",
+                icon: <CalendarDays className="h-6 w-6" />,
+              },
+              {
+                title: "Maintenance Pipelines",
+                desc: "Track repairs with technician details, priorities, and automatic recovery back to 'Available' status.",
+                icon: <Wrench className="h-6 w-6" />,
+              },
+            ].map((feat, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col items-center p-6 bg-white border border-slate-100 rounded-2xl shadow-sm text-center"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  {feat.icon}
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-900">{feat.title}</h3>
+                <p className="mt-2 text-xs text-slate-500 leading-relaxed">{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── ABOUT US SECTION ───────────────────────────────────────────────── */}
+      <section id="about" className="py-20 bg-white border-t border-slate-100">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Context Text */}
+            <div className="flex flex-col gap-6">
+              <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">About Nexora</span>
+              <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+                Replacing spreadsheet chaos with operational clarity.
+              </h2>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Nexora was built to help organizations regain control over their shared hardware, IT devices, room systems, and key assets. Spreadsheets fail because they lack validation, edit histories, and real-time calendars.
+              </p>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                By enforcing hard business rules at both the API and database levels, Nexora guarantees that an asset can never be allocated to two places at once, maintenance schedules are strictly followed, and auditing reports highlight exact discrepancies.
+              </p>
+
+              <div className="flex flex-wrap gap-6 mt-2 border-t border-slate-100 pt-6">
+                <div>
+                  <span className="block text-2xl font-bold text-indigo-600">100%</span>
+                  <span className="text-xs font-semibold text-slate-400">Inventory Visibility</span>
+                </div>
+                <div className="h-10 w-px bg-slate-100" />
+                <div>
+                  <span className="block text-2xl font-bold text-indigo-600">0%</span>
+                  <span className="text-xs font-semibold text-slate-400">Overlapping Bookings</span>
+                </div>
+                <div className="h-10 w-px bg-slate-100" />
+                <div>
+                  <span className="block text-2xl font-bold text-indigo-600">24/7</span>
+                  <span className="text-xs font-semibold text-slate-400">Real-Time Access</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Panel */}
+            <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 flex flex-col gap-6">
+              <h3 className="text-base font-bold text-slate-900">Nexora Guiding Principles</h3>
+              <div className="flex flex-col gap-4">
+                {[
+                  "No double active allocations for any asset.",
+                  "Completed maintenance tickets restore status to Available.",
+                  "All bookings validate date range conflicts automatically.",
+                  "Audit cycles produce explicit discrepancy files.",
+                ].map((principle, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                    <span className="text-xs font-semibold text-slate-650 leading-normal">{principle}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── RESOURCES/BLOG SECTION ─────────────────────────────────────────── */}
+      <section id="blog" className="py-20 bg-slate-50 border-t border-slate-100">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">Knowledge Center</span>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl mt-2">
+              Asset Operations & Compliance Insights
+            </h2>
+            <p className="mt-3 text-sm text-slate-500">
+              Read the latest articles from our operations leads on auditing workflows, hardware lifecycle optimizations, and facility management.
+            </p>
           </div>
 
           {/* Cards Grid */}
@@ -164,10 +331,10 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4 }}
-                className="group relative flex flex-col overflow-hidden rounded-[20px] border border-slate-100 bg-white shadow-sm hover:shadow-xl transition-all duration-300"
+                className="group relative flex flex-col overflow-hidden rounded-[20px] border border-slate-150 bg-white shadow-sm hover:shadow-xl transition-all duration-300"
               >
                 {/* Post Cover image */}
-                <div className="relative h-56 w-full overflow-hidden bg-slate-50">
+                <div className="relative h-52 w-full overflow-hidden bg-slate-100">
                   <img
                     src={post.image}
                     alt={post.title}
@@ -198,12 +365,12 @@ export default function LandingPage() {
                         alt="Author"
                         className="h-7 w-7 rounded-full object-cover"
                       />
-                      <span className="text-xs font-semibold text-slate-500">
+                      <span className="text-xs font-semibold text-slate-500 font-medium">
                         {post.date}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 text-slate-400 text-xs font-medium">
+                    <div className="flex items-center gap-3 text-slate-400 text-xs font-semibold">
                       <span className="flex items-center gap-1">
                         <Eye className="h-4 w-4" /> {post.views}
                       </span>
@@ -219,41 +386,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── SYSTEM FEATURES SECTION ────────────────────────────────────────── */}
-      <section className="py-20 bg-slate-50 border-t border-slate-100">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
-          <div className="flex flex-col items-center gap-2 mb-16">
-            <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">Robust Architecture</span>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-              Core Modules Designed for Scale
-            </h2>
-            <p className="max-w-xl text-sm text-slate-500">
-              Nexora provides complete compliance tracking and resource availability logs out of the box.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { title: "Asset Visibility", desc: "Scan, search, and audit physical inventories directly via tags & serials.", icon: <Package className="h-6 w-6" /> },
-              { title: "Lifecycle Logs", desc: "Track every state transition from checking out to repair pipelines.", icon: <History className="h-6 w-6" /> },
-              { title: "Maintenance Checks", desc: "Assign technicians, approve repairs, and restore assets cleanly.", icon: <Wrench className="h-6 w-6" /> },
-              { title: "Resource Bookings", desc: "Conflict-free reservations on conference rooms and shared devices.", icon: <CalendarDays className="h-6 w-6" /> },
-            ].map((feat, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col items-center p-6 bg-white border border-slate-100 rounded-2xl shadow-sm text-center"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  {feat.icon}
-                </div>
-                <h3 className="mt-4 text-base font-bold text-slate-900">{feat.title}</h3>
-                <p className="mt-2 text-xs text-slate-500">{feat.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── SYSTEM STATUS FOOTER ───────────────────────────────────────────── */}
       <footer className="bg-slate-900 py-12 text-slate-400 text-sm border-t border-slate-800">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -261,7 +393,7 @@ export default function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
               <Zap className="h-4.5 w-4.5 fill-current" />
             </div>
-            <span className="font-bold text-white">Nexora ERP</span>
+            <span className="font-bold text-white tracking-wide">Nexora ERP</span>
           </div>
           <p className="text-xs">
             © {new Date().getFullYear()} Nexora Corporation. All rights reserved.
