@@ -33,6 +33,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request, List.of());
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorizedException(
+            UnauthorizedException exception,
+            HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleMethodArgumentNotValid(
             MethodArgumentNotValidException exception,
