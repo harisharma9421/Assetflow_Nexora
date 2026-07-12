@@ -3,6 +3,7 @@ package com.assetflow.nexora.service;
 import com.assetflow.nexora.dto.auth.AuthResponse;
 import com.assetflow.nexora.dto.auth.AuthUserResponse;
 import com.assetflow.nexora.dto.auth.LoginRequest;
+import com.assetflow.nexora.dto.auth.PromoteUserRoleRequest;
 import com.assetflow.nexora.dto.auth.SignupRequest;
 import com.assetflow.nexora.entity.Role;
 import com.assetflow.nexora.entity.User;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private static final String EMPLOYEE_ROLE = "Employee";
+    private static final String ADMIN_ROLE = "Admin";
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -92,6 +94,38 @@ public class AuthService {
         Role role = roleRepository.findById(user.roleId)
                 .orElseThrow(() -> new ResourceNotFoundException("User role is not configured"));
         return toAuthUserResponse(user, role);
+    }
+
+    @Transactional
+    public AuthUserResponse promoteUserRole(
+            Long userId,
+            PromoteUserRoleRequest request,
+            String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin user was not found"));
+        Role adminRole = roleRepository.findById(admin.roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin role is not configured"));
+
+        if (!ADMIN_ROLE.equals(adminRole.name)) {
+            throw new UnauthorizedException("Only Admin users can assign roles");
+        }
+
+        String requestedRoleName = request.roleName().trim();
+        if (ADMIN_ROLE.equals(requestedRoleName)) {
+            throw new BadRequestException("Admin role cannot be assigned through employee promotion");
+        }
+
+        Role requestedRole = roleRepository.findByName(requestedRoleName)
+                .orElseThrow(() -> new ResourceNotFoundException("Requested role was not found"));
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User was not found"));
+
+        targetUser.roleId = requestedRole.id;
+        targetUser.promotedBy = admin.id;
+        targetUser.promotedAt = OffsetDateTime.now(ZoneOffset.UTC);
+
+        User savedUser = userRepository.save(targetUser);
+        return toAuthUserResponse(savedUser, requestedRole);
     }
 
     public AuthUserResponse toAuthUserResponse(User user, Role role) {
