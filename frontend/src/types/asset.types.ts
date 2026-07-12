@@ -1,6 +1,6 @@
 /**
  * Asset Types
- * Covers the complete asset lifecycle in Assetra ERP
+ * Covers the complete asset lifecycle in Nexora ERP
  */
 import type { UUID, ISODateString } from "./common.types";
 
@@ -86,3 +86,4 @@ export interface AssetLifecycleEvent {
   notes: string | null;
   createdAt: ISODateString;
 }
+

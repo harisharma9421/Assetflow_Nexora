@@ -3,8 +3,8 @@ import AuthPageWrapper from "@/features/auth/components/AuthPageWrapper";
 import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
 
 export const metadata: Metadata = {
-  title: "Forgot Password | Assetra",
-  description: "Reset your Assetra account password.",
+  title: "Forgot Password | Nexora",
+  description: "Reset your Nexora account password.",
 };
 
 export default function ForgotPasswordPage() {
@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
             <span className="text-sm font-bold text-white">A</span>
           </div>
           <span className="text-base font-bold text-[hsl(var(--color-foreground))]">
-            Assetra
+            Nexora
           </span>
         </div>
 
@@ -35,3 +35,4 @@ export default function ForgotPasswordPage() {
     </AuthPageWrapper>
   );
 }
+

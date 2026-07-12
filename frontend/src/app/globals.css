@@ -3,24 +3,24 @@
 @layer base {
   :root {
     /* Brand Colors */
-    --color-primary: 221 83% 53%;
+    --color-primary: 244 76% 59%;
     --color-primary-foreground: 0 0% 100%;
 
     /* Surface */
-    --color-background: 0 0% 100%;
-    --color-foreground: 222 47% 11%;
+    --color-background: 210 40% 98%;
+    --color-foreground: 221 39% 11%;
     --color-card: 0 0% 100%;
-    --color-card-foreground: 222 47% 11%;
+    --color-card-foreground: 221 39% 11%;
     --color-popover: 0 0% 100%;
-    --color-popover-foreground: 222 47% 11%;
+    --color-popover-foreground: 221 39% 11%;
 
     /* Muted */
-    --color-muted: 210 40% 96%;
-    --color-muted-foreground: 215 16% 47%;
+    --color-muted: 220 14% 96%;
+    --color-muted-foreground: 220 9% 46%;
 
     /* Accent */
-    --color-accent: 210 40% 94%;
-    --color-accent-foreground: 222 47% 11%;
+    --color-accent: 220 14% 94%;
+    --color-accent-foreground: 221 39% 11%;
 
     /* Destructive */
     --color-destructive: 0 84% 60%;
@@ -32,21 +32,21 @@
     --color-info: 199 89% 48%;
 
     /* Border & Input */
-    --color-border: 214 32% 91%;
-    --color-input: 214 32% 91%;
-    --color-ring: 221 83% 53%;
+    --color-border: 220 13% 91%;
+    --color-input: 220 13% 91%;
+    --color-ring: 244 76% 59%;
 
     /* Sidebar */
-    --color-sidebar: 222 47% 11%;
-    --color-sidebar-foreground: 210 40% 96%;
-    --color-sidebar-muted: 215 25% 27%;
-    --color-sidebar-muted-foreground: 215 20% 65%;
-    --color-sidebar-accent: 217 33% 17%;
-    --color-sidebar-border: 215 28% 17%;
-    --color-sidebar-primary: 221 83% 53%;
+    --color-sidebar: 221 39% 11%;
+    --color-sidebar-foreground: 210 40% 98%;
+    --color-sidebar-muted: 220 9% 46%;
+    --color-sidebar-muted-foreground: 220 9% 65%;
+    --color-sidebar-accent: 244 76% 15%;
+    --color-sidebar-border: 220 13% 15%;
+    --color-sidebar-primary: 244 76% 59%;
 
-    /* Radius */
-    --radius: 0.5rem;
+    /* Radius: 16px - 20px (1rem to 1.25rem) */
+    --radius: 1rem;
 
     /* Typography */
     --font-sans: "Inter", system-ui, -apple-system, sans-serif;

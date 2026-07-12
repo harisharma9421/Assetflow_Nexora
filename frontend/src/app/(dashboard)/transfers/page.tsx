@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Transfers | Assetra" };
+export const metadata: Metadata = { title: "Transfers | Nexora" };
 
 export default function Page() {
   return (
@@ -14,3 +14,4 @@ export default function Page() {
     </div>
   );
 }
+

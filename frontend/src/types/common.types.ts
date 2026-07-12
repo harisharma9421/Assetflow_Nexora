@@ -1,6 +1,6 @@
 /**
  * Common / Shared Types
- * Used across all modules in Assetra ERP
+ * Used across all modules in Nexora ERP
  */
 
 export type UUID = string;
@@ -61,3 +61,4 @@ export interface TableColumn<T> {
   sortable?: boolean;
   render?: (value: unknown, row: T) => React.ReactNode;
 }
+
