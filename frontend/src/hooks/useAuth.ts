@@ -11,10 +11,14 @@ import type { UserRole } from "@/types/auth.types";
 export function useAuth() {
   const { user, isAuthenticated, logout } = useAuthStore();
 
-  const hasRole = (role: UserRole): boolean => user?.role === role;
+  const hasRole = (role: UserRole): boolean => {
+    if (!user?.roleName) return false;
+    const normalizedUserRole = user.roleName.toUpperCase().replace(/\s+/g, "_");
+    return normalizedUserRole === role;
+  };
 
   const hasAnyRole = (...roles: UserRole[]): boolean =>
-    roles.some((role) => user?.role === role);
+    roles.some((role) => hasRole(role));
 
   const isAdmin = hasRole(USER_ROLES.ADMIN as UserRole);
   const isAssetManager = hasRole(USER_ROLES.ASSET_MANAGER as UserRole);
