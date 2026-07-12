@@ -41,6 +41,7 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
     private final long passwordResetExpirationMinutes;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -50,12 +51,14 @@ public class AuthService {
             PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            EmailService emailService,
             @Value("${app.password-reset.expiration-minutes}") long passwordResetExpirationMinutes) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.emailService = emailService;
         this.passwordResetExpirationMinutes = passwordResetExpirationMinutes;
     }
 
@@ -121,7 +124,6 @@ public class AuthService {
                 .map(this::createPasswordResetToken)
                 .orElseGet(() -> new ForgotPasswordResponse(
                         "If the email is registered, a reset token has been generated.",
-                        null,
                         null));
     }
 
@@ -189,9 +191,9 @@ public class AuthService {
         resetToken.expiresAt = OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(passwordResetExpirationMinutes);
 
         PasswordResetToken savedToken = passwordResetTokenRepository.save(resetToken);
+        emailService.sendPasswordResetEmail(user.email, user.fullName, rawToken);
         return new ForgotPasswordResponse(
-                "If the email is registered, a reset token has been generated.",
-                rawToken,
+                "If the email is registered, a password reset email has been sent.",
                 savedToken.expiresAt);
     }
 
