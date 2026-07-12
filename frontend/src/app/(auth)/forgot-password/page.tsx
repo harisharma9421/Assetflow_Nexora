@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import AuthPageWrapper from "@/features/auth/components/AuthPageWrapper";
-import SignupForm from "@/features/auth/components/SignupForm";
+import ForgotPasswordForm from "@/features/auth/components/ForgotPasswordForm";
 
 export const metadata: Metadata = {
-  title: "Create Account | Assetra",
-  description:
-    "Create your Assetra employee account to get started with asset management and resource booking.",
+  title: "Forgot Password | Assetra",
+  description: "Reset your Assetra account password.",
 };
 
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
   return (
-    <AuthPageWrapper variant="signup">
+    <AuthPageWrapper variant="forgot">
       {/* Header */}
       <div className="mb-7">
         {/* Mobile logo */}
@@ -24,15 +23,15 @@ export default function RegisterPage() {
         </div>
 
         <h1 className="text-2xl font-bold text-[hsl(var(--color-foreground))]">
-          Create your account
+          Forgot your password?
         </h1>
         <p className="mt-1.5 text-sm text-[hsl(var(--color-muted-foreground))]">
-          Join your organization on Assetra
+          No worries — we'll send you reset instructions
         </p>
       </div>
 
-      {/* Signup Form */}
-      <SignupForm />
+      {/* Form */}
+      <ForgotPasswordForm />
     </AuthPageWrapper>
   );
 }

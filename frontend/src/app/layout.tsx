@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,7 +42,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full bg-background text-foreground">{children}</body>
+      <body className="min-h-full bg-[hsl(var(--color-background))] text-[hsl(var(--color-foreground))]" suppressHydrationWarning>
+        {children}
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            duration: 4000,
+            style: {
+              fontFamily: "var(--font-sans)",
+              fontSize: "14px",
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }

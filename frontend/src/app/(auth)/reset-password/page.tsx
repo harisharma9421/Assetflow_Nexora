@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import AuthPageWrapper from "@/features/auth/components/AuthPageWrapper";
-import SignupForm from "@/features/auth/components/SignupForm";
+import ResetPasswordForm from "@/features/auth/components/ResetPasswordForm";
 
 export const metadata: Metadata = {
-  title: "Create Account | Assetra",
-  description:
-    "Create your Assetra employee account to get started with asset management and resource booking.",
+  title: "Reset Password | Assetra",
+  description: "Set a new password for your Assetra account.",
 };
 
-export default function RegisterPage() {
+export default function ResetPasswordPage() {
   return (
-    <AuthPageWrapper variant="signup">
+    <AuthPageWrapper variant="forgot">
       {/* Header */}
       <div className="mb-7">
         {/* Mobile logo */}
@@ -24,15 +24,17 @@ export default function RegisterPage() {
         </div>
 
         <h1 className="text-2xl font-bold text-[hsl(var(--color-foreground))]">
-          Create your account
+          Set new password
         </h1>
         <p className="mt-1.5 text-sm text-[hsl(var(--color-muted-foreground))]">
-          Join your organization on Assetra
+          Your new password must be at least 8 characters
         </p>
       </div>
 
-      {/* Signup Form */}
-      <SignupForm />
+      {/* Form — wrapped in Suspense for useSearchParams */}
+      <Suspense fallback={null}>
+        <ResetPasswordForm />
+      </Suspense>
     </AuthPageWrapper>
   );
 }
