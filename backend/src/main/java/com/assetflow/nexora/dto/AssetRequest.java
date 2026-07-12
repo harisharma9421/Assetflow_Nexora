@@ -1,0 +1,1 @@
+package com.assetflow.nexora.dto; import java.math.*; import java.time.*; public record AssetRequest(String assetTag,String name,Long categoryId,String serialNumber,String qrCode,LocalDate acquisitionDate,BigDecimal acquisitionCost,String condition,String location,boolean bookable,Long owningDepartmentId){}

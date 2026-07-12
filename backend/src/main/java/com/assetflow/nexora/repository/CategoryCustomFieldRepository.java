@@ -1,0 +1,1 @@
+package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.CategoryCustomField; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface CategoryCustomFieldRepository extends JpaRepository<CategoryCustomField,Long>{List<CategoryCustomField> findByCategoryId(Long categoryId);}

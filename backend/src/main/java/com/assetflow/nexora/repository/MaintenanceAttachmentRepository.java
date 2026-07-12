@@ -1,0 +1,1 @@
+package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.MaintenanceAttachment; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface MaintenanceAttachmentRepository extends JpaRepository<MaintenanceAttachment,Long>{List<MaintenanceAttachment> findByRequestId(Long requestId);}

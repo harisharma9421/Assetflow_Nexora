@@ -1,0 +1,1 @@
+package com.assetflow.nexora.dto; import java.time.*; public record AuditCycleDto(Long id,String name,Long scopeDepartmentId,String scopeLocation,LocalDate startDate,LocalDate endDate,String status){}

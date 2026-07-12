@@ -1,0 +1,1 @@
+package com.assetflow.nexora.dto; import java.time.*; public record NotificationDto(Long id,Long userId,String type,String title,String message,String relatedEntityType,Long relatedEntityId,boolean read,OffsetDateTime createdAt){}

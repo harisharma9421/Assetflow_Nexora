@@ -1,0 +1,1 @@
+package com.assetflow.nexora.repository; import com.assetflow.nexora.entity.ResourceBooking; import java.util.*; import org.springframework.data.jpa.repository.JpaRepository; public interface ResourceBookingRepository extends JpaRepository<ResourceBooking,Long>{List<ResourceBooking> findByAssetId(Long assetId);List<ResourceBooking> findByBookedBy(Long userId);}

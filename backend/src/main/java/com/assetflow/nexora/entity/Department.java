@@ -1,0 +1,2 @@
+package com.assetflow.nexora.entity;
+import jakarta.persistence.*; @Entity @Table(name="departments") public class Department extends AuditedEntity { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) @Column(name="department_id") public Long id; @Column(nullable=false,unique=true,length=150) public String name; @Column(name="parent_department_id") public Long parentDepartmentId; @Column(name="head_user_id") public Long headUserId; @Column(nullable=false,length=20) public String status="Active"; }
