@@ -105,20 +105,12 @@ export default function LoginForm() {
 
         {/* Password */}
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <label
-              htmlFor="login-password"
-              className="text-sm font-medium text-[hsl(var(--color-foreground))]"
-            >
-              Password <span className="text-[hsl(var(--color-destructive))]">*</span>
-            </label>
-            <Link
-              href={ROUTES.FORGOT_PASSWORD}
-              className="text-xs font-medium text-[hsl(var(--color-primary))] hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <label
+            htmlFor="login-password"
+            className="text-sm font-medium text-[hsl(var(--color-foreground))]"
+          >
+            Password <span className="text-[hsl(var(--color-destructive))]">*</span>
+          </label>
           <PasswordInput
             id="login-password"
             autoComplete="current-password"
@@ -126,6 +118,25 @@ export default function LoginForm() {
             error={errors.password?.message}
             {...register("password")}
           />
+        </div>
+
+        {/* Remember Me & Forgot Password */}
+        <div className="flex items-center justify-between mt-1">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="h-4.5 w-4.5 rounded-[6px] border-[hsl(var(--color-border))] text-[hsl(var(--color-primary))] focus:ring-[hsl(var(--color-primary))] focus:ring-offset-0 transition-colors"
+            />
+            <span className="text-xs font-medium text-[hsl(var(--color-muted-foreground))]">
+              Remember this device
+            </span>
+          </label>
+          <Link
+            href={ROUTES.FORGOT_PASSWORD}
+            className="text-xs font-bold text-[hsl(var(--color-primary))] hover:underline"
+          >
+            Forgot Password?
+          </Link>
         </div>
 
         {/* Submit */}
@@ -136,7 +147,7 @@ export default function LoginForm() {
           rightIcon={!isSubmitting ? <ArrowRight className="h-4 w-4" /> : undefined}
           className="mt-1 w-full"
         >
-          Sign in to Assetra
+          Sign in to Nexora
         </Button>
 
         {/* Sign up link */}
@@ -153,3 +164,4 @@ export default function LoginForm() {
     </motion.div>
   );
 }
+

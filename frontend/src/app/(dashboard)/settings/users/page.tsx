@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "User Management | Assetra" };
+export const metadata: Metadata = { title: "User Management | Nexora" };
 
 export default function UserManagementPage() {
   return (
@@ -14,3 +14,4 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
