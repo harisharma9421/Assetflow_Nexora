@@ -82,8 +82,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException exception,
             HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "Request conflicts with existing data or database constraints", request,
-                List.of());
+        String message = "Request conflicts with existing data or database constraints";
+        
+        // Check if it's a booking overlap constraint violation
+        String errorMessage = exception.getMessage();
+        if (errorMessage != null && errorMessage.contains("excl_no_overlapping_bookings")) {
+            message = "Booking time slot overlaps with an existing booking. Please choose a different time.";
+        }
+        
+        return build(HttpStatus.CONFLICT, message, request, List.of());
+    }
+
+    @ExceptionHandler(BookingOverlapException.class)
+    public ResponseEntity<Object> handleBookingOverlap(
+            BookingOverlapException exception,
+            HttpServletRequest request) {
+        var response = new java.util.HashMap<String, Object>();
+        response.put("timestamp", OffsetDateTime.now(ZoneOffset.UTC));
+        response.put("status", HttpStatus.CONFLICT.value());
+        response.put("error", "Booking Overlap");
+        response.put("message", exception.getMessage());
+        response.put("path", request.getRequestURI());
+        response.put("conflictStart", exception.getConflictStart());
+        response.put("conflictEnd", exception.getConflictEnd());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

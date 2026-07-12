@@ -1,12 +1,9 @@
 package com.assetflow.nexora.dto;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.*;
+import java.time.OffsetDateTime;
 
-public record ResourceBookingRequest(
-    @NotNull Long assetId, 
-    Long departmentId, 
-    String purpose, 
+public record BookingRescheduleRequest(
     @NotNull OffsetDateTime startTime,
     @NotNull OffsetDateTime endTime
 ) {
