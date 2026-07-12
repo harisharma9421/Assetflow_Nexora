@@ -1,5 +1,7 @@
 package com.assetflow.nexora.controller;
 
+import com.assetflow.nexora.dto.BookingCancelRequest;
+import com.assetflow.nexora.dto.BookingRescheduleRequest;
 import com.assetflow.nexora.dto.ResourceBookingRequest;
 import com.assetflow.nexora.dto.ResourceBookingResponse;
 import com.assetflow.nexora.service.BookingService;
@@ -36,5 +38,29 @@ public class BookingController {
     @GetMapping("/{bookingId}")
     public ResourceBookingResponse getBooking(@PathVariable Long bookingId) {
         return bookingService.getBooking(bookingId);
+    }
+
+    @PostMapping("/{bookingId}/cancel")
+    public ResourceBookingResponse cancelBooking(
+            @PathVariable Long bookingId,
+            @Valid @RequestBody BookingCancelRequest request) {
+        return bookingService.cancelBooking(bookingId, request);
+    }
+
+    @PutMapping("/{bookingId}/reschedule")
+    public ResourceBookingResponse rescheduleBooking(
+            @PathVariable Long bookingId,
+            @Valid @RequestBody BookingRescheduleRequest request) {
+        return bookingService.rescheduleBooking(bookingId, request);
+    }
+
+    @PostMapping("/{bookingId}/start")
+    public ResourceBookingResponse startBooking(@PathVariable Long bookingId) {
+        return bookingService.startBooking(bookingId);
+    }
+
+    @PostMapping("/{bookingId}/complete")
+    public ResourceBookingResponse completeBooking(@PathVariable Long bookingId) {
+        return bookingService.completeBooking(bookingId);
     }
 }

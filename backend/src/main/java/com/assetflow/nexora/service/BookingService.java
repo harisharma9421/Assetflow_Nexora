@@ -1,5 +1,7 @@
 package com.assetflow.nexora.service;
 
+import com.assetflow.nexora.dto.BookingCancelRequest;
+import com.assetflow.nexora.dto.BookingRescheduleRequest;
 import com.assetflow.nexora.dto.ResourceBookingRequest;
 import com.assetflow.nexora.dto.ResourceBookingResponse;
 import com.assetflow.nexora.entity.Asset;
@@ -134,6 +136,122 @@ public class BookingService {
     public ResourceBookingResponse getBooking(Long bookingId) {
         ResourceBooking booking = findBooking(bookingId);
         return toResponse(booking);
+    }
+
+    public ResourceBookingResponse cancelBooking(Long bookingId, BookingCancelRequest request) {
+        ResourceBooking booking = findBooking(bookingId);
+        
+        // Validate booking is not already cancelled or completed
+        if ("Cancelled".equals(booking.status)) {
+            throw new BadRequestException("Booking is already cancelled");
+        }
+        
+        if ("Completed".equals(booking.status)) {
+            throw new BadRequestException("Cannot cancel a completed booking");
+        }
+        
+        // Validate user exists
+        users.findById(request.cancelledBy())
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + request.cancelledBy() + " was not found"));
+        
+        // Cancel the booking
+        booking.status = "Cancelled";
+        booking.cancelledBy = request.cancelledBy();
+        booking.cancelledAt = OffsetDateTime.now(ZoneOffset.UTC);
+        
+        ResourceBooking saved = bookings.save(booking);
+        return toResponse(saved);
+    }
+
+    public ResourceBookingResponse rescheduleBooking(Long bookingId, BookingRescheduleRequest request) {
+        ResourceBooking booking = findBooking(bookingId);
+        
+        // Validate booking can be rescheduled
+        if ("Cancelled".equals(booking.status)) {
+            throw new BadRequestException("Cannot reschedule a cancelled booking");
+        }
+        
+        if ("Completed".equals(booking.status)) {
+            throw new BadRequestException("Cannot reschedule a completed booking");
+        }
+        
+        // Validate new time range
+        if (request.startTime() == null || request.endTime() == null) {
+            throw new BadRequestException("Start time and end time are required");
+        }
+        
+        if (!request.endTime().isAfter(request.startTime())) {
+            throw new BadRequestException("End time must be after start time");
+        }
+        
+        // Validate new booking is not in the past
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        if (request.startTime().isBefore(now)) {
+            throw new BadRequestException("Cannot reschedule booking to the past");
+        }
+        
+        // Store old times for potential rollback
+        OffsetDateTime oldStart = booking.startTime;
+        OffsetDateTime oldEnd = booking.endTime;
+        
+        try {
+            // Update booking times
+            booking.startTime = request.startTime();
+            booking.endTime = request.endTime();
+            
+            // Database constraint will check for overlaps with other bookings
+            ResourceBooking saved = bookings.save(booking);
+            return toResponse(saved);
+        } catch (DataIntegrityViolationException e) {
+            // Check if it's an overlap constraint violation
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("excl_no_overlapping_bookings")) {
+                // Find the overlapping booking to provide details
+                List<ResourceBooking> existingBookings = bookings.findByAssetId(booking.assetId);
+                for (ResourceBooking existing : existingBookings) {
+                    if (!existing.id.equals(bookingId) && 
+                        ("Upcoming".equals(existing.status) || "Ongoing".equals(existing.status)) &&
+                        isOverlapping(request.startTime(), request.endTime(), existing.startTime, existing.endTime)) {
+                        throw new BookingOverlapException(
+                            String.format("Rescheduled time slot %s to %s overlaps with an existing booking from %s to %s",
+                                request.startTime(), request.endTime(), existing.startTime, existing.endTime),
+                            existing.startTime,
+                            existing.endTime
+                        );
+                    }
+                }
+                throw new BookingOverlapException(
+                    "Rescheduled booking time slot overlaps with an existing booking. Please choose a different time.",
+                    request.startTime(),
+                    request.endTime()
+                );
+            }
+            throw e;
+        }
+    }
+
+    public ResourceBookingResponse startBooking(Long bookingId) {
+        ResourceBooking booking = findBooking(bookingId);
+        
+        if (!"Upcoming".equals(booking.status)) {
+            throw new BadRequestException("Only upcoming bookings can be started");
+        }
+        
+        booking.status = "Ongoing";
+        ResourceBooking saved = bookings.save(booking);
+        return toResponse(saved);
+    }
+
+    public ResourceBookingResponse completeBooking(Long bookingId) {
+        ResourceBooking booking = findBooking(bookingId);
+        
+        if (!"Ongoing".equals(booking.status) && !"Upcoming".equals(booking.status)) {
+            throw new BadRequestException("Only ongoing or upcoming bookings can be completed");
+        }
+        
+        booking.status = "Completed";
+        ResourceBooking saved = bookings.save(booking);
+        return toResponse(saved);
     }
 
     private ResourceBooking findBooking(Long id) {
