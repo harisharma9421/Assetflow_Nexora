@@ -11,7 +11,7 @@ flowchart TB
         Forms["React Hook Form + Zod\nforms + validation"]
     end
 
-    subgraph API["Backend Layer - Java 21 + Spring Boot 3.5"]
+    subgraph API["Backend Layer - Java 17 + Spring Boot 3.5"]
         Security["Spring Security + JWT\nlogin, signup, role-based access"]
         Controllers["REST Controllers\nrequest/response DTOs"]
         Services["Service Layer\nbusiness rules + workflows"]
