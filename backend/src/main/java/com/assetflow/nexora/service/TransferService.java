@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,16 +23,18 @@ public class TransferService {
     private final UserRepository users;
     private final DepartmentRepository departments;
     private final JdbcTemplate jdbc;
+    private final ActivityLogService activityLogService;
 
     public TransferService(TransferRequestRepository transfers, AssetRepository assets, 
             AssetAllocationRepository allocations, UserRepository users, 
-            DepartmentRepository departments, JdbcTemplate jdbc) {
+            DepartmentRepository departments, JdbcTemplate jdbc, ActivityLogService activityLogService) {
         this.transfers = transfers;
         this.assets = assets;
         this.allocations = allocations;
         this.users = users;
         this.departments = departments;
         this.jdbc = jdbc;
+        this.activityLogService = activityLogService;
     }
 
     public TransferRequestResponse create(TransferRequestCreateRequest request) {
@@ -83,6 +86,22 @@ public class TransferService {
         transfer.status = "Requested";
 
         TransferRequest saved = transfers.save(transfer);
+        
+        // Log activity
+        activityLogService.log(
+            "TRANSFER_REQUESTED",
+            "transfer",
+            saved.id,
+            request.requestedBy(),
+            Map.of(
+                "assetId", request.assetId(),
+                "currentAllocationId", request.currentAllocationId(),
+                "requestedToEmployeeId", request.requestedToEmployeeId() != null ? request.requestedToEmployeeId() : 0,
+                "requestedToDepartmentId", request.requestedToDepartmentId() != null ? request.requestedToDepartmentId() : 0,
+                "reason", request.reason() != null ? request.reason() : ""
+            )
+        );
+        
         return response(saved);
     }
 
@@ -131,6 +150,20 @@ public class TransferService {
         transfer.resolvedAt = OffsetDateTime.now(ZoneOffset.UTC);
 
         TransferRequest saved = transfers.save(transfer);
+        
+        // Log activity
+        activityLogService.log(
+            "TRANSFER_APPROVED",
+            "transfer",
+            saved.id,
+            request.approvedBy(),
+            Map.of(
+                "assetId", transfer.assetId,
+                "oldAllocationId", transfer.currentAllocationId,
+                "newAllocationId", savedAllocation.id,
+                "notes", request.notes() != null ? request.notes() : ""
+            )
+        );
         
         // Asset status remains Allocated (handled by trigger)
         return response(saved);

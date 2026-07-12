@@ -8,6 +8,7 @@ import com.assetflow.nexora.exception.ResourceNotFoundException;
 import com.assetflow.nexora.repository.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -24,14 +25,16 @@ public class AllocationService {
     private final UserRepository users;
     private final DepartmentRepository departments;
     private final JdbcTemplate jdbc;
+    private final ActivityLogService activityLogService;
 
     public AllocationService(AssetRepository assets, AssetAllocationRepository allocations, UserRepository users,
-            DepartmentRepository departments, JdbcTemplate jdbc) {
+            DepartmentRepository departments, JdbcTemplate jdbc, ActivityLogService activityLogService) {
         this.assets = assets;
         this.allocations = allocations;
         this.users = users;
         this.departments = departments;
         this.jdbc = jdbc;
+        this.activityLogService = activityLogService;
     }
 
     public AssetAllocationResponse allocate(AssetAllocationRequest request) {
@@ -61,6 +64,23 @@ public class AllocationService {
         allocation.expectedReturnDate = request.expectedReturnDate();
         AssetAllocation saved = allocations.save(allocation);
         updateAssetStatus(asset.id, asset.status, "Allocated", "Asset allocated", request.allocatedBy());
+        
+        // Log activity
+        activityLogService.log(
+            "ASSET_ALLOCATED",
+            "allocation",
+            saved.id,
+            request.allocatedBy(),
+            Map.of(
+                "assetId", asset.id,
+                "assetTag", asset.assetTag,
+                "holderType", allocation.holderType,
+                "holderEmployeeId", allocation.holderEmployeeId != null ? allocation.holderEmployeeId : 0,
+                "holderDepartmentId", allocation.holderDepartmentId != null ? allocation.holderDepartmentId : 0,
+                "expectedReturnDate", allocation.expectedReturnDate != null ? allocation.expectedReturnDate.toString() : ""
+            )
+        );
+        
         return response(saved);
     }
 
@@ -84,6 +104,22 @@ public class AllocationService {
                     request.assetCondition(), asset.id);
         }
         updateAssetStatus(asset.id, asset.status, "Available", "Asset returned", request.returnedTo());
+        
+        // Log activity
+        activityLogService.log(
+            "ASSET_RETURNED",
+            "allocation",
+            saved.id,
+            request.returnedTo(),
+            Map.of(
+                "assetId", asset.id,
+                "assetTag", asset.assetTag,
+                "actualReturnDate", saved.actualReturnDate.toString(),
+                "returnConditionNotes", saved.returnConditionNotes != null ? saved.returnConditionNotes : "",
+                "assetCondition", request.assetCondition() != null ? request.assetCondition() : ""
+            )
+        );
+        
         return response(saved);
     }
 
