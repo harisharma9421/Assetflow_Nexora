@@ -5,14 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { Mail, ArrowRight, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 import { loginSchema, type LoginSchema } from "@/features/auth/auth.schemas";
 import { authApi } from "@/features/auth/auth.api";
 import { useAuthStore } from "@/store/auth.store";
-import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
@@ -142,7 +141,7 @@ export default function LoginForm() {
 
         {/* Sign up link */}
         <p className="text-center text-sm text-[hsl(var(--color-muted-foreground))]">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href={ROUTES.REGISTER}
             className="font-medium text-[hsl(var(--color-primary))] hover:underline"

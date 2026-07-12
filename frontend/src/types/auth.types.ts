@@ -2,7 +2,6 @@
  * Authentication & User Types
  * Mapped exactly to Spring Boot DTOs (dto/auth/*.java)
  */
-import type { ISODateString } from "./common.types";
 
 export type UserRole =
   | "ADMIN"

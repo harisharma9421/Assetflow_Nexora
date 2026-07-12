@@ -4,7 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Mail, ArrowLeft, CheckCircle2, AlertCircle, Send } from "lucide-react";
+import { Mail, ArrowLeft, AlertCircle, Send } from "lucide-react";
 import { motion } from "framer-motion";
 
 import {
@@ -76,7 +76,7 @@ export default function ForgotPasswordForm() {
           </p>
           <p className="mt-1 text-xs text-[hsl(var(--color-muted-foreground))]">
             The link will expire in 15 minutes. Check your spam folder if you
-            don't see it.
+            don&apos;t see it.
           </p>
         </div>
 
@@ -125,7 +125,7 @@ export default function ForgotPasswordForm() {
         )}
 
         <p className="text-sm text-[hsl(var(--color-muted-foreground))]">
-          Enter your work email address and we'll send you a link to reset your
+          Enter your work email address and we&apos;ll send you a link to reset your
           password.
         </p>
 

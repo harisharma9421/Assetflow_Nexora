@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
           Forgot your password?
         </h1>
         <p className="mt-1.5 text-sm text-[hsl(var(--color-muted-foreground))]">
-          No worries — we'll send you reset instructions
+          No worries — we&apos;ll send you reset instructions
         </p>
       </div>
 

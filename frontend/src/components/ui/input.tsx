@@ -55,7 +55,7 @@ Input.displayName = "Input";
 
 // ─── Password Input ────────────────────────────────────────────────────────────
 
-export interface PasswordInputProps extends Omit<InputProps, "type"> {}
+export type PasswordInputProps = Omit<InputProps, "type">;
 
 export const PasswordInput = React.forwardRef<
   HTMLInputElement,
